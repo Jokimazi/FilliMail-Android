@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">FilliMail</string>
+    <string name="title_main">FilliMail</string>
+    <string name="hint_email">Email адрес</string>
+    <string name="hint_password">Пароль</string>
+    <string name="hint_imap_host">IMAP сервер</string>
+    <string name="default_imap_host">imap.gmail.com</string>
+    <string name="hint_port">Порт</string>
+    <string name="default_imap_port">993</string>
+    <string name="text_ssl">SSL</string>
+    <string name="btn_add_account">Добавить аккаунт</string>
 </resources>
