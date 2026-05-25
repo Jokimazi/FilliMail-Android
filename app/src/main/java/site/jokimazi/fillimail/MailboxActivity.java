@@ -37,6 +37,28 @@ public class MailboxActivity extends AppCompatActivity {
         binding = ActivityMailboxBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        // Открытие шторки по клику на иконку "гамбургера" в тулбаре
+        binding.toolbar.setNavigationOnClickListener(v -> binding.drawerLayout.open());
+
+        // Обработка кликов по меню
+        binding.navView.setNavigationItemSelectedListener(item -> {
+            int id = item.getItemId();
+
+            if (id == R.id.nav_all_mail) {
+                Toast.makeText(this, "Показываем всю почту", Toast.LENGTH_SHORT).show();
+            } else if (id == R.id.nav_settings) {
+                Toast.makeText(this, "Открываем настройки", Toast.LENGTH_SHORT).show();
+            } else if (id == R.id.nav_accounts_manage) {
+                Toast.makeText(this, "Управление аккаунтами", Toast.LENGTH_SHORT).show();
+            } else if (id == R.id.nav_about) {
+                Toast.makeText(this, "О программе", Toast.LENGTH_SHORT).show();
+            }
+
+            // Закрываем шторку после клика
+            binding.drawerLayout.close();
+            return true;
+        });
+
         // Инициализируем адаптер и передаем действие по клику (открыть письмо)
         adapter = new EmailAdapter(email -> {
             Intent intent = new Intent(MailboxActivity.this, ReadEmailActivity.class);

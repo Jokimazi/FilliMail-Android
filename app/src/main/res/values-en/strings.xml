@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FilliMail</string>
+    <string name="login_title">FILLIMAIL</string>
+    <string name="login_subtitle">Will deliver, no matter what happens</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="btn_login">LOG IN</string>
+
+    <string name="title_advanced_settings">Server Settings</string>
+    <string name="hint_imap_host">IMAP Host</string>
+    <string name="hint_imap_port">IMAP Port</string>
+    <string name="hint_smtp_host">SMTP Host</string>
+    <string name="hint_smtp_port">SMTP Port</string>
+    <string name="check_use_ssl">Use SSL</string>
+
+    <string name="toast_searching_settings">Searching mail settings…</string>
+    <string name="toast_settings_found">Settings automatically found!</string>
+    <string name="toast_settings_not_found">Settings not found. Enter manually.</string>
+    <string name="toast_empty_fields">Fill email and password</string>
+    <string name="lang_changed">Language changed to English</string>
+</resources>

@@ -20,8 +20,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 app:title="Новое письмо"
-                app:titleTextColor="@android:color/white"
+                app:titleTextColor="?attr/colorOnPrimary"
                 app:navigationIcon="@android:drawable/ic_menu_revert"
+                app:navigationIconTint="?attr/colorOnPrimary"
                 android:background="?attr/colorPrimary">
 
                 <ImageView
@@ -31,7 +32,7 @@
                     android:layout_gravity="end"
                     android:padding="16dp"
                     android:src="@android:drawable/ic_menu_send"
-                    app:tint="@android:color/white" />
+                    app:tint="?attr/colorOnPrimary" />
             </com.google.android.material.appbar.MaterialToolbar>
         </com.google.android.material.appbar.AppBarLayout>
 

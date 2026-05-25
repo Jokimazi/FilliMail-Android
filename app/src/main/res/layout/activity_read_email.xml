@@ -20,9 +20,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 app:title="Чтение письма"
-                app:titleTextColor="@android:color/white"
+                app:titleTextColor="?attr/colorOnPrimary"
                 app:navigationIcon="@android:drawable/ic_menu_revert"
+                app:navigationIconTint="?attr/colorOnPrimary"
                 android:background="?attr/colorPrimary"/>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                android:background="?attr/colorOutlineVariant"/>
         </com.google.android.material.appbar.AppBarLayout>
 
         <androidx.core.widget.NestedScrollView

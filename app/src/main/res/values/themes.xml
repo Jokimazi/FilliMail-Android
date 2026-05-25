@@ -1,5 +1,29 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Base.Theme.FilliMail" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/blue_logo</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/yellow_logo</item>
     </style>
     <style name="Theme.FilliMail" parent="Base.Theme.FilliMail" />
+
+    <style name="Widget.FilliMail.Button.Pill" parent="Widget.Material3.Button">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.FilliMail.Pill</item>
+        <item name="backgroundTint">?attr/colorPrimary</item>
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+    </style>
+
+    <style name="Widget.FilliMail.TextInputLayout" parent="Widget.Material3.TextInputLayout.FilledBox">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.FilliMail.Medium</item>
+        <item name="boxBackgroundColor">?attr/colorSurfaceVariant</item>
+        <item name="boxStrokeWidth">0dp</item>
+        <item name="boxStrokeWidthFocused">0dp</item>
+    </style>
+
+    <style name="ShapeAppearance.FilliMail.Pill" parent="ShapeAppearance.Material3.Corner.Full">
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <style name="ShapeAppearance.FilliMail.Medium" parent="ShapeAppearance.Material3.Corner.Medium">
+        <item name="cornerSize">16dp</item>
+    </style>
 </resources>
