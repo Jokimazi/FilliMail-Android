@@ -3,11 +3,13 @@ package site.jokimazi.fillimail;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import com.google.android.material.navigation.NavigationView;
@@ -21,6 +23,7 @@ import javax.mail.Folder;
 import javax.mail.Session;
 import javax.mail.Store;
 import javax.mail.UIDFolder;
+import javax.mail.internet.InternetAddress;
 
 import site.jokimazi.fillimail.adapter.EmailAdapter;
 import site.jokimazi.fillimail.databinding.ActivityMailboxBinding;
@@ -30,6 +33,8 @@ import site.jokimazi.fillimail.model.EmailMessage;
 public class MailboxActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final String TAG = "FilliMail_Net";
+    private static final HashMap<String, List<EmailMessage>> memoryCache = new HashMap<>();
+
     private ActivityMailboxBinding binding;
     private List<EmailAccount> accountList = new ArrayList<>();
     private EmailAdapter emailAdapter;
@@ -43,7 +48,7 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
     private volatile long currentLoadId = 0;
 
     private String currentEmailKey = "all";
-    private String currentServerFolder = "INBOX";
+    private String serverFolderName = "INBOX";
     private String currentDisplayFolder;
 
     @Override
@@ -54,7 +59,18 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
 
         currentDisplayFolder = getString(R.string.nav_inbox);
 
-        binding.toolbar.setNavigationOnClickListener(v -> binding.drawerLayout.open());
+        setSupportActionBar(binding.toolbar);
+
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, binding.drawerLayout, binding.toolbar, R.string.dialog_yes, R.string.dialog_no);
+
+        TypedValue typedValue = new TypedValue();
+        getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnPrimary, typedValue, true);
+        toggle.getDrawerArrowDrawable().setColor(typedValue.data);
+
+        binding.drawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
+
         binding.navView.setNavigationItemSelectedListener(this);
 
         emailAdapter = new EmailAdapter(email -> {
@@ -65,6 +81,12 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
 
         binding.recyclerEmails.setLayoutManager(new LinearLayoutManager(this));
         binding.recyclerEmails.setAdapter(emailAdapter);
+
+        binding.swipeRefresh.setOnRefreshListener(() -> {
+            String cacheKey = currentEmailKey + "_" + serverFolderName;
+            memoryCache.remove(cacheKey);
+            loadEmailsForAccount(currentEmailKey, serverFolderName, currentDisplayFolder);
+        });
 
         binding.fabCompose.setOnClickListener(v -> startActivity(new Intent(this, ComposeActivity.class)));
 
@@ -91,7 +113,7 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
             runOnUiThread(() -> {
                 rebuildMenu();
                 for (EmailAccount account : accountList) fetchFoldersFromServer(account);
-                loadEmailsForAccount(currentEmailKey, currentServerFolder, currentDisplayFolder);
+                loadEmailsForAccount(currentEmailKey, serverFolderName, currentDisplayFolder);
             });
         }).start();
     }
@@ -191,7 +213,6 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
         if (id == R.id.nav_all_mail) {
             expandedEmail = "all".equals(expandedEmail) ? null : "all";
             triggerRebuildMenu();
-            loadEmailsForAccount("all", "INBOX", getString(R.string.nav_inbox));
             return true;
         } else if (id == R.id.nav_settings || id == R.id.nav_accounts_manage || id == R.id.nav_about) {
             if (id == R.id.nav_accounts_manage) {
@@ -203,7 +224,6 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
             String clickedEmail = accountItemMap.get(id);
             expandedEmail = clickedEmail.equals(expandedEmail) ? null : clickedEmail;
             triggerRebuildMenu();
-            loadEmailsForAccount(clickedEmail, "INBOX", getString(R.string.nav_inbox));
             return true;
         }
         if (folderActionMap.containsKey(id)) {
@@ -214,9 +234,9 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
         return false;
     }
 
-    private void loadEmailsForAccount(String email, String serverFolderName, String displayFolderName) {
+    private void loadEmailsForAccount(String email, String folderName, String displayFolderName) {
         this.currentEmailKey = email;
-        this.currentServerFolder = serverFolderName;
+        this.serverFolderName = folderName;
         this.currentDisplayFolder = displayFolderName;
 
         binding.toolbar.setTitle(displayFolderName);
@@ -226,10 +246,18 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
         currentLoadId = myLoadId;
 
         emailAdapter.setShowReceiver(email.equals("all"));
-        emailAdapter.clear();
 
-        binding.progressLoading.setVisibility(View.VISIBLE);
-        binding.tvEmptyState.setVisibility(View.GONE);
+        String cacheKey = email + "_" + folderName;
+        if (memoryCache.containsKey(cacheKey)) {
+            List<EmailMessage> cached = memoryCache.get(cacheKey);
+            emailAdapter.setEmails(new ArrayList<>(cached));
+            binding.progressLoading.setVisibility(View.GONE);
+            binding.tvEmptyState.setVisibility(View.GONE);
+        } else {
+            emailAdapter.clear();
+            binding.progressLoading.setVisibility(View.VISIBLE);
+            binding.tvEmptyState.setVisibility(View.GONE);
+        }
 
         new Thread(() -> {
             try {
@@ -245,7 +273,7 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
                         Session session = Session.getInstance(props);
                         Store store = session.getStore("imaps");
                         store.connect(account.getImapHost(), account.getImapPort(), account.getEmail(), account.getPassword());
-                        Folder folder = store.getFolder(serverFolderName);
+                        Folder folder = store.getFolder(folderName);
                         if (!folder.exists()) folder = store.getFolder("INBOX");
                         folder.open(Folder.READ_ONLY);
 
@@ -262,11 +290,32 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
                                 if (messageDate == null) messageDate = msg.getSentDate();
                                 if (messageDate == null) messageDate = new Date(0);
 
-                                EmailMessage newEmail = new EmailMessage(msgUid, account.getId(), account.getEmail(), msg.getFrom()[0].toString(), msg.getSubject(), "", messageDate);
+                                String senderName = "";
+                                String senderEmail = "";
+                                if (msg.getFrom() != null && msg.getFrom().length > 0) {
+                                    if (msg.getFrom()[0] instanceof InternetAddress) {
+                                        InternetAddress addr = (InternetAddress) msg.getFrom()[0];
+                                        senderName = addr.getPersonal();
+                                        senderEmail = addr.getAddress();
+                                    } else {
+                                        senderEmail = msg.getFrom()[0].toString();
+                                    }
+                                }
+
+                                EmailMessage newEmail = new EmailMessage(msgUid, account.getId(), folderName, account.getEmail(), senderName, senderEmail, msg.getSubject(), "", messageDate);
 
                                 runOnUiThread(() -> {
                                     if (currentLoadId == myLoadId) {
-                                        emailAdapter.addEmailSorted(newEmail);
+                                        if (!emailAdapter.hasEmail(newEmail.uid, newEmail.accountId)) {
+                                            emailAdapter.addEmailSorted(newEmail);
+
+                                            List<EmailMessage> currentCache = memoryCache.get(cacheKey);
+                                            if (currentCache == null) {
+                                                currentCache = new ArrayList<>();
+                                                memoryCache.put(cacheKey, currentCache);
+                                            }
+                                            currentCache.add(newEmail);
+                                        }
                                         binding.progressLoading.setVisibility(View.GONE);
                                     }
                                 });
@@ -274,21 +323,25 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
                         }
                         folder.close(false); store.close();
                     } catch (Exception accountException) {
-                        Log.e(TAG, "Ошибка чтения аккаунта " + account.getEmail(), accountException);
+                        Log.e(TAG, "Error", accountException);
                     }
                 }
 
                 runOnUiThread(() -> {
                     if (currentLoadId == myLoadId) {
                         binding.progressLoading.setVisibility(View.GONE);
+                        binding.swipeRefresh.setRefreshing(false);
                         if (emailAdapter.getItemCount() == 0) {
                             binding.tvEmptyState.setVisibility(View.VISIBLE);
                         }
                     }
                 });
             } catch (Exception e) {
-                Log.e(TAG, "Глобальная ошибка стриминга писем", e);
-                runOnUiThread(() -> binding.progressLoading.setVisibility(View.GONE));
+                Log.e(TAG, "Error", e);
+                runOnUiThread(() -> {
+                    binding.progressLoading.setVisibility(View.GONE);
+                    binding.swipeRefresh.setRefreshing(false);
+                });
             }
         }).start();
     }

@@ -4,9 +4,11 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -37,6 +39,15 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.EmailViewHol
         emails.clear();
         emails.addAll(newEmails);
         notifyDataSetChanged();
+    }
+
+    public boolean hasEmail(long uid, int accountId) {
+        for (EmailMessage m : emails) {
+            if (m.uid == uid && m.accountId == accountId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void addEmailSorted(EmailMessage email) {
@@ -71,10 +82,10 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.EmailViewHol
     @Override
     public void onBindViewHolder(@NonNull EmailViewHolder holder, int position) {
         EmailMessage email = emails.get(position);
-
         Context context = holder.itemView.getContext();
 
-        holder.tvSender.setText(context.getString(R.string.format_from, email.sender));
+        String displayName = (email.senderName != null && !email.senderName.isEmpty()) ? email.senderName : email.senderEmail;
+        holder.tvSender.setText(context.getString(R.string.format_from, displayName));
 
         if (showReceiver && email.receiver != null) {
             holder.tvReceiver.setVisibility(View.VISIBLE);
@@ -95,6 +106,12 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.EmailViewHol
                 : context.getString(R.string.no_subject);
         holder.tvSubject.setText(subject);
 
+        Glide.with(context)
+                .load(email.getGravatarUrl())
+                .placeholder(android.R.drawable.ic_menu_myplaces)
+                .error(android.R.drawable.ic_menu_myplaces)
+                .into(holder.ivAvatar);
+
         holder.itemView.setOnClickListener(v -> listener.onEmailClick(email));
     }
 
@@ -105,6 +122,7 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.EmailViewHol
 
     static class EmailViewHolder extends RecyclerView.ViewHolder {
         TextView tvSender, tvSubject, tvReceiver, tvDate;
+        ImageView ivAvatar;
 
         public EmailViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -112,6 +130,7 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.EmailViewHol
             tvSubject = itemView.findViewById(R.id.tv_subject);
             tvReceiver = itemView.findViewById(R.id.tv_receiver);
             tvDate = itemView.findViewById(R.id.tv_date);
+            ivAvatar = itemView.findViewById(R.id.iv_avatar);
         }
     }
 }
