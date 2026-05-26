@@ -10,8 +10,8 @@ android {
         applicationId = "site.jokimazi.fillimail"
         minSdk = 30
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0-Alpha"
+        versionCode = 13
+        versionName = "1.0.0-RC1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -32,8 +32,9 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true     // ← включаем XML + View Binding
-        compose = false        // ← отключаем Compose
+        viewBinding = true
+        buildConfig = true
+        compose = false
     }
 
     packaging {
@@ -60,4 +61,7 @@ dependencies {
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
+
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 }
