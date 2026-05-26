@@ -1,15 +1,12 @@
 package site.jokimazi.fillimail;
 
 import android.content.Intent;
-import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Properties;
 import javax.mail.Session;
 import javax.mail.Store;
@@ -38,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
 
-        binding.btnLangStar.setOnClickListener(v -> toggleLanguage());
+        binding.btnLangStar.setOnClickListener(v -> Toast.makeText(this, "Не тыкай)", Toast.LENGTH_SHORT).show());
 
         binding.etEmail.setOnFocusChangeListener((v, hasFocus) -> {
             if (!hasFocus) {
@@ -128,24 +125,20 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // Блокируем кнопку и показываем статус
         binding.btnLogin.setEnabled(false);
         Toast.makeText(this, getString(R.string.toast_checking_credentials), Toast.LENGTH_SHORT).show();
 
         new Thread(() -> {
             try {
-                // ИСПРАВЛЕНИЕ: Тестируем подключение перед сохранением
                 Properties props = new Properties();
                 props.setProperty("mail.store.protocol", "imaps");
-                props.setProperty("mail.imaps.timeout", "10000"); // 10 секунд на попытку
+                props.setProperty("mail.imaps.timeout", "10000");
                 Session session = Session.getInstance(props);
                 Store store = session.getStore("imaps");
 
-                // Если пароль неверный, эта строка выкинет AuthenticationFailedException
                 store.connect(imapHost, imapPort, email, password);
-                store.close(); // Подключение успешно! Закрываем тест.
+                store.close();
 
-                // Сохраняем аккаунт
                 EmailAccount account = new EmailAccount(
                         email, password, imapHost, imapPort, smtpHost, smtpPort, binding.cbSsl.isChecked()
                 );
@@ -157,37 +150,16 @@ public class MainActivity extends AppCompatActivity {
                 });
 
             } catch (javax.mail.AuthenticationFailedException authEx) {
-                // ПАРОЛЬ ИЛИ ПОЧТА НЕВЕРНЫ
                 runOnUiThread(() -> {
                     Toast.makeText(MainActivity.this, getString(R.string.toast_auth_failed), Toast.LENGTH_LONG).show();
                     binding.btnLogin.setEnabled(true);
                 });
             } catch (Exception e) {
-                // ПРОБЛЕМЫ С СЕТЬЮ ИЛИ СЕРВЕРОМ
                 runOnUiThread(() -> {
                     Toast.makeText(MainActivity.this, getString(R.string.toast_connection_error, e.getMessage()), Toast.LENGTH_LONG).show();
                     binding.btnLogin.setEnabled(true);
                 });
             }
         }).start();
-    }
-
-    private void toggleLanguage() {
-        Resources res = getResources();
-        Configuration conf = res.getConfiguration();
-        Locale currentLocale = conf.locale;
-
-        String nextLang = currentLocale.getLanguage().equals("en") ? "ru" : "en";
-        Locale locale = new Locale(nextLang);
-        Locale.setDefault(locale);
-
-        conf.setLocale(locale);
-        res.updateConfiguration(conf, res.getDisplayMetrics());
-
-        Intent intent = getIntent();
-        finish();
-        startActivity(intent);
-
-        Toast.makeText(this, getString(R.string.lang_changed), Toast.LENGTH_SHORT).show();
     }
 }

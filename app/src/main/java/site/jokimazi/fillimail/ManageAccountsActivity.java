@@ -1,6 +1,7 @@
 package site.jokimazi.fillimail;
 
 import android.content.Intent;
+import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
@@ -27,7 +28,6 @@ public class ManageAccountsActivity extends AppCompatActivity {
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // ИСПРАВЛЕНИЕ: Оживили кнопку добавления аккаунта
         fabAdd.setOnClickListener(v -> {
             startActivity(new Intent(this, AddAccountActivity.class));
         });
@@ -38,7 +38,7 @@ public class ManageAccountsActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        loadAccounts(); // Обновляем список, если вернулись с экрана добавления
+        loadAccounts();
     }
 
     private void loadAccounts() {
@@ -57,14 +57,22 @@ public class ManageAccountsActivity extends AppCompatActivity {
             if (list.size() <= 1) {
                 runOnUiThread(() -> Toast.makeText(this, getString(R.string.toast_cannot_delete_last), Toast.LENGTH_SHORT).show());
             } else {
-                // ИСПРАВЛЕНИЕ: Вызов диалога обязательно должен быть в главном потоке!
                 runOnUiThread(() -> {
-                    new AlertDialog.Builder(this)
+                    AlertDialog dialog = new AlertDialog.Builder(this)
                             .setTitle(getString(R.string.dialog_delete_title))
                             .setMessage(getString(R.string.dialog_delete_message, account.getEmail()))
                             .setPositiveButton(getString(R.string.dialog_yes), (d, w) -> performDelete(account))
                             .setNegativeButton(getString(R.string.dialog_no), null)
-                            .show();
+                            .create();
+
+                    dialog.show();
+
+                    TypedArray a = obtainStyledAttributes(new int[]{android.R.attr.textColorPrimary});
+                    int textColor = a.getColor(0, 0);
+                    a.recycle();
+
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(textColor);
+                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(textColor);
                 });
             }
         }).start();

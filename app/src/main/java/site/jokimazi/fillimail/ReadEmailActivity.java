@@ -1,9 +1,7 @@
 package site.jokimazi.fillimail;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.appbar.MaterialToolbar;
 import javax.mail.Folder;
@@ -50,7 +48,6 @@ public class ReadEmailActivity extends AppCompatActivity {
                 Message msg = null;
                 EmailAccount targetAccount = null;
 
-                // Находим нужный аккаунт по ID
                 for (EmailAccount acc : accounts) {
                     if (acc.getId() == email.accountId) {
                         targetAccount = acc;
@@ -70,12 +67,9 @@ public class ReadEmailActivity extends AppCompatActivity {
 
                 store.connect(targetAccount.getImapHost(), targetAccount.getImapPort(), targetAccount.getEmail(), targetAccount.getPassword());
 
-                // В идеале сюда тоже нужно передавать папку из MailboxActivity,
-                // но пока для простоты оставим INBOX, как было в оригинале
                 Folder folder = store.getFolder("INBOX");
                 folder.open(Folder.READ_ONLY);
 
-                // ИСПРАВЛЕНИЕ: Ищем письмо мгновенно по UID
                 if (folder instanceof UIDFolder && email.uid != -1) {
                     msg = ((UIDFolder) folder).getMessageByUID(email.uid);
                 }

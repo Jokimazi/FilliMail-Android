@@ -14,11 +14,9 @@ public interface AccountDao {
     void insert(EmailAccount account);
 
     @Delete
-        // Добавь эту аннотацию
     void delete(EmailAccount account);
 
     @Update
-        // Добавь эту аннотацию
     void update(EmailAccount account);
 
     @Query("SELECT * FROM email_accounts")

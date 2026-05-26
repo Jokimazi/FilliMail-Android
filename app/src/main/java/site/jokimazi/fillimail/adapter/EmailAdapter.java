@@ -72,13 +72,10 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.EmailViewHol
     public void onBindViewHolder(@NonNull EmailViewHolder holder, int position) {
         EmailMessage email = emails.get(position);
 
-        // Получаем контекст для работы со strings.xml
         Context context = holder.itemView.getContext();
 
-        // Форматируем отправителя через ресурсы
         holder.tvSender.setText(context.getString(R.string.format_from, email.sender));
 
-        // Обработка получателя
         if (showReceiver && email.receiver != null) {
             holder.tvReceiver.setVisibility(View.VISIBLE);
             holder.tvReceiver.setText(context.getString(R.string.format_to, email.receiver));
@@ -86,7 +83,6 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.EmailViewHol
             holder.tvReceiver.setVisibility(View.GONE);
         }
 
-        // Форматирование даты
         if (email.date != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("d MMM, HH:mm", Locale.getDefault());
             holder.tvDate.setText(sdf.format(email.date));
@@ -94,7 +90,6 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.EmailViewHol
             holder.tvDate.setText("");
         }
 
-        // Обработка темы письма
         String subject = (email.subject != null && !email.subject.trim().isEmpty())
                 ? email.subject
                 : context.getString(R.string.no_subject);

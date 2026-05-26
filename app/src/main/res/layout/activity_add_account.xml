@@ -28,13 +28,13 @@
             android:id="@+id/et_imap_host"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/hint_imap_host_example" />
+            android:hint="@string/hint_imap_host" />
 
         <EditText
             android:id="@+id/et_imap_port"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/hint_imap_port_example"
+            android:hint="@string/hint_imap_port"
             android:inputType="number" />
 
         <EditText

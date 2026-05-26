@@ -6,7 +6,7 @@ import java.util.Date;
 public class EmailMessage implements Serializable {
     public long uid;
     public int accountId;
-    public String receiver; // ДОБАВЛЕНО: почта, на которую пришло письмо
+    public String receiver;
     public String sender;
     public String subject;
     public String body;

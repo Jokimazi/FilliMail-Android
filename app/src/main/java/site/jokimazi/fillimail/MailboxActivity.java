@@ -225,7 +225,6 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
         final long myLoadId = System.currentTimeMillis();
         currentLoadId = myLoadId;
 
-        // ИСПРАВЛЕНИЕ: Включаем показ "Кому:" только если мы во "Всей почте"
         emailAdapter.setShowReceiver(email.equals("all"));
         emailAdapter.clear();
 
@@ -263,7 +262,6 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
                                 if (messageDate == null) messageDate = msg.getSentDate();
                                 if (messageDate == null) messageDate = new Date(0);
 
-                                // ИСПРАВЛЕНИЕ: Передаем account.getEmail() как получателя
                                 EmailMessage newEmail = new EmailMessage(msgUid, account.getId(), account.getEmail(), msg.getFrom()[0].toString(), msg.getSubject(), "", messageDate);
 
                                 runOnUiThread(() -> {

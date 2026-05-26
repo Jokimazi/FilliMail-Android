@@ -14,7 +14,7 @@
     <string name="check_use_ssl">Использовать SSL</string>
     <string name="toast_searching_settings">Поиск настроек почты…</string>
     <string name="toast_settings_found">Настройки успешно найдены!</string>
-    <string name="toast_settings_not_found">Настройки не найдены. Введите вручную.</string>
+    <string name="toast_settings_not_found">Настройки не найдены. Введите вручную если ваши отличаются от предложенных.</string>
     <string name="toast_empty_fields">Заполните все поля</string>
     <string name="lang_changed">Язык изменен на русский</string>
     <string name="nav_all_mail">Вся почта</string>
@@ -43,8 +43,6 @@
     <string name="dialog_delete_message">Удалить %s?</string>
     <string name="dialog_yes">Да</string>
     <string name="dialog_no">Нет</string>
-    <string name="hint_imap_host_example">IMAP Хост (например, imap.mail.ru)</string>
-    <string name="hint_imap_port_example">Порт (обычно 993)</string>
     <string name="btn_save_account">Сохранить аккаунт</string>
     <string name="title_compose">Новое письмо</string>
     <string name="hint_to">Кому</string>

@@ -43,8 +43,6 @@
     <string name="dialog_delete_message">Delete %s?</string>
     <string name="dialog_yes">Yes</string>
     <string name="dialog_no">No</string>
-    <string name="hint_imap_host_example">IMAP Host (e.g. imap.mail.ru)</string>
-    <string name="hint_imap_port_example">Port (usually 993)</string>
     <string name="btn_save_account">Save account</string>
     <string name="title_compose">Compose email</string>
     <string name="hint_to">To</string>
