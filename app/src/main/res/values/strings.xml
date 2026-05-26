@@ -36,7 +36,7 @@
     <string name="toast_save_error">Ошибка сохранения: %s</string>
     <string name="toast_account_error">Ошибка аккаунта</string>
     <string name="toast_fill_recipient">Заполните получателя и текст</string>
-    <string name="toast_sending">Отправка...</string>
+    <string name="toast_sending">Отправка…</string>
     <string name="toast_email_sent">Письмо отправлено!</string>
     <string name="toast_send_error">Ошибка отправки: %s</string>
     <string name="toast_cannot_delete_last">Нельзя удалить последний аккаунт</string>
@@ -56,8 +56,11 @@
     <string name="title_read_email">Чтение письма</string>
     <string name="desc_edit">Редактировать</string>
     <string name="desc_delete">Удалить</string>
-    <string name="state_loading">Загрузка...</string>
+    <string name="state_loading">Загрузка…</string>
     <string name="state_email_not_found">Письмо не найдено.</string>
     <string name="state_error">Ошибка: %s</string>
     <string name="state_unsupported_format">Неподдерживаемый формат письма</string>
+    <string name="toast_checking_credentials">Проверка данных подключения…</string>
+    <string name="toast_auth_failed">Неверный email или пароль!</string>
+    <string name="toast_connection_error">Ошибка подключения: %s</string>
 </resources>

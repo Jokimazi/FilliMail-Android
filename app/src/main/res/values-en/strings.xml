@@ -36,7 +36,7 @@
     <string name="toast_save_error">Save error: %s</string>
     <string name="toast_account_error">Account error</string>
     <string name="toast_fill_recipient">Fill recipient and body</string>
-    <string name="toast_sending">Sending...</string>
+    <string name="toast_sending">Sending…</string>
     <string name="toast_email_sent">Email sent!</string>
     <string name="toast_send_error">Send error: %s</string>
     <string name="toast_cannot_delete_last">Cannot delete the last account</string>
@@ -56,8 +56,11 @@
     <string name="title_read_email">Read Email</string>
     <string name="desc_edit">Edit</string>
     <string name="desc_delete">Delete</string>
-    <string name="state_loading">Loading...</string>
+    <string name="state_loading">Loading…</string>
     <string name="state_email_not_found">Email not found.</string>
     <string name="state_error">Error: %s</string>
     <string name="state_unsupported_format">Unsupported email format</string>
+    <string name="toast_checking_credentials">Checking connection…</string>
+    <string name="toast_auth_failed">Invalid email or password!</string>
+    <string name="toast_connection_error">Connection error: %s</string>
 </resources>

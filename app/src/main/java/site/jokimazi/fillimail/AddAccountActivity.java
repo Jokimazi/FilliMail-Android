@@ -1,7 +1,6 @@
 package site.jokimazi.fillimail;
 
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -9,13 +8,16 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import site.jokimazi.fillimail.model.EmailAccount;
 import java.util.List;
+import java.util.Properties;
+import javax.mail.Session;
+import javax.mail.Store;
 
 public class AddAccountActivity extends AppCompatActivity {
 
     private EditText etEmail, etPassword, etImapHost, etImapPort, etSmtpHost, etSmtpPort;
     private CheckBox cbSsl;
     private Button btnSave;
-    private int editAccountId = -1; // -1 означает создание нового, иначе — редактирование
+    private int editAccountId = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,14 +33,12 @@ public class AddAccountActivity extends AppCompatActivity {
         cbSsl = findViewById(R.id.cb_ssl);
         btnSave = findViewById(R.id.btn_save);
 
-        // ИСПРАВЛЕНИЕ: Автоопределение настроек сервера при потере фокуса поля Email
         etEmail.setOnFocusChangeListener((v, hasFocus) -> {
             if (!hasFocus) {
                 autoDetectSettings();
             }
         });
 
-        // ИСПРАВЛЕНИЕ: Проверяем, зашли ли мы в режиме редактирования
         editAccountId = getIntent().getIntExtra("edit_account_id", -1);
         if (editAccountId != -1) {
             btnSave.setText("Сохранить изменения");
@@ -146,11 +146,24 @@ public class AddAccountActivity extends AppCompatActivity {
             return;
         }
 
+        // Блокируем кнопку
+        btnSave.setEnabled(false);
+        Toast.makeText(this, getString(R.string.toast_checking_credentials), Toast.LENGTH_SHORT).show();
+
         new Thread(() -> {
             try {
+                // ИСПРАВЛЕНИЕ: Тестируем подключение
+                Properties props = new Properties();
+                props.setProperty("mail.store.protocol", "imaps");
+                props.setProperty("mail.imaps.timeout", "10000"); // 10 секунд
+                Session session = Session.getInstance(props);
+                Store store = session.getStore("imaps");
+                store.connect(imapHost, imapPort, email, password);
+                store.close();
+
+                // Авторизация прошла успешно — сохраняем/обновляем
                 EmailAccount account = new EmailAccount(email, password, imapHost, imapPort, smtpHost, smtpPort, useSsl);
 
-                // ИСПРАВЛЕНИЕ: Если редактируем — обновляем, если нет — создаем новый
                 if (editAccountId != -1) {
                     account.setId(editAccountId);
                     App.getInstance().getDatabase().accountDao().update(account);
@@ -162,8 +175,16 @@ public class AddAccountActivity extends AppCompatActivity {
                     Toast.makeText(this, editAccountId != -1 ? "Изменения сохранены!" : getString(R.string.toast_account_added), Toast.LENGTH_SHORT).show();
                     finish();
                 });
+            } catch (javax.mail.AuthenticationFailedException authEx) {
+                runOnUiThread(() -> {
+                    Toast.makeText(AddAccountActivity.this, getString(R.string.toast_auth_failed), Toast.LENGTH_LONG).show();
+                    btnSave.setEnabled(true);
+                });
             } catch (Exception e) {
-                runOnUiThread(() -> Toast.makeText(this, getString(R.string.toast_save_error, e.getMessage()), Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> {
+                    Toast.makeText(AddAccountActivity.this, getString(R.string.toast_connection_error, e.getMessage()), Toast.LENGTH_LONG).show();
+                    btnSave.setEnabled(true);
+                });
             }
         }).start();
     }

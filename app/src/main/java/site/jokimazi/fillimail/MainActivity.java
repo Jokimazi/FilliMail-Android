@@ -10,6 +10,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
+import javax.mail.Session;
+import javax.mail.Store;
 
 import site.jokimazi.fillimail.databinding.ActivityMainBinding;
 import site.jokimazi.fillimail.model.EmailAccount;
@@ -116,23 +119,56 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        int imapPort, smtpPort;
+        try {
+            imapPort = Integer.parseInt(imapPortStr);
+            smtpPort = Integer.parseInt(smtpPortStr);
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, getString(R.string.toast_invalid_port), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Блокируем кнопку и показываем статус
+        binding.btnLogin.setEnabled(false);
+        Toast.makeText(this, getString(R.string.toast_checking_credentials), Toast.LENGTH_SHORT).show();
+
         new Thread(() -> {
-            EmailAccount account = new EmailAccount(
-                    email,
-                    password,
-                    imapHost,
-                    Integer.parseInt(imapPortStr),
-                    smtpHost,
-                    Integer.parseInt(smtpPortStr),
-                    binding.cbSsl.isChecked()
-            );
+            try {
+                // ИСПРАВЛЕНИЕ: Тестируем подключение перед сохранением
+                Properties props = new Properties();
+                props.setProperty("mail.store.protocol", "imaps");
+                props.setProperty("mail.imaps.timeout", "10000"); // 10 секунд на попытку
+                Session session = Session.getInstance(props);
+                Store store = session.getStore("imaps");
 
-            App.getInstance().getDatabase().accountDao().insert(account);
+                // Если пароль неверный, эта строка выкинет AuthenticationFailedException
+                store.connect(imapHost, imapPort, email, password);
+                store.close(); // Подключение успешно! Закрываем тест.
 
-            runOnUiThread(() -> {
-                startActivity(new Intent(MainActivity.this, MailboxActivity.class));
-                finish();
-            });
+                // Сохраняем аккаунт
+                EmailAccount account = new EmailAccount(
+                        email, password, imapHost, imapPort, smtpHost, smtpPort, binding.cbSsl.isChecked()
+                );
+                App.getInstance().getDatabase().accountDao().insert(account);
+
+                runOnUiThread(() -> {
+                    startActivity(new Intent(MainActivity.this, MailboxActivity.class));
+                    finish();
+                });
+
+            } catch (javax.mail.AuthenticationFailedException authEx) {
+                // ПАРОЛЬ ИЛИ ПОЧТА НЕВЕРНЫ
+                runOnUiThread(() -> {
+                    Toast.makeText(MainActivity.this, getString(R.string.toast_auth_failed), Toast.LENGTH_LONG).show();
+                    binding.btnLogin.setEnabled(true);
+                });
+            } catch (Exception e) {
+                // ПРОБЛЕМЫ С СЕТЬЮ ИЛИ СЕРВЕРОМ
+                runOnUiThread(() -> {
+                    Toast.makeText(MainActivity.this, getString(R.string.toast_connection_error, e.getMessage()), Toast.LENGTH_LONG).show();
+                    binding.btnLogin.setEnabled(true);
+                });
+            }
         }).start();
     }
 
