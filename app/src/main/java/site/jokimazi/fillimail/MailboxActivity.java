@@ -132,7 +132,6 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
 
             for (String folderName : sorted) {
                 int folderItemId = dynamicIdCounter++;
-
                 String displayName = folderName;
                 String iconChar = "📁 ";
 
@@ -149,7 +148,6 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
 
                 String fullItemText = "▶ " + iconChar + displayName;
                 menu.add(Menu.NONE, folderItemId, startOrder++, fullItemText);
-
                 folderActionMap.put(folderItemId, new FolderAction(emailKey, folderName, displayName));
             }
         }
@@ -227,7 +225,10 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
         final long myLoadId = System.currentTimeMillis();
         currentLoadId = myLoadId;
 
+        // ИСПРАВЛЕНИЕ: Включаем показ "Кому:" только если мы во "Всей почте"
+        emailAdapter.setShowReceiver(email.equals("all"));
         emailAdapter.clear();
+
         binding.progressLoading.setVisibility(View.VISIBLE);
         binding.tvEmptyState.setVisibility(View.GONE);
 
@@ -262,13 +263,13 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
                                 if (messageDate == null) messageDate = msg.getSentDate();
                                 if (messageDate == null) messageDate = new Date(0);
 
-                                EmailMessage newEmail = new EmailMessage(msgUid, account.getId(), msg.getFrom()[0].toString(), msg.getSubject(), "", messageDate);
+                                // ИСПРАВЛЕНИЕ: Передаем account.getEmail() как получателя
+                                EmailMessage newEmail = new EmailMessage(msgUid, account.getId(), account.getEmail(), msg.getFrom()[0].toString(), msg.getSubject(), "", messageDate);
 
-                                // ИСПРАВЛЕНИЕ: Стримим каждое письмо в UI-поток мгновенно на лету
                                 runOnUiThread(() -> {
                                     if (currentLoadId == myLoadId) {
-                                        emailAdapter.addEmailSorted(newEmail); // Вставляем в правильное место
-                                        binding.progressLoading.setVisibility(View.GONE); // Скрываем лоадер сразу при первом письме
+                                        emailAdapter.addEmailSorted(newEmail);
+                                        binding.progressLoading.setVisibility(View.GONE);
                                     }
                                 });
                             }
@@ -279,7 +280,6 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
                     }
                 }
 
-                // В самом конце, когда все аккаунты прошлись, проверяем — пусто ли
                 runOnUiThread(() -> {
                     if (currentLoadId == myLoadId) {
                         binding.progressLoading.setVisibility(View.GONE);

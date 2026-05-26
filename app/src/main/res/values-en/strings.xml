@@ -30,7 +30,6 @@
     <string name="desc_compose_fab">Compose email</string>
     <string name="toast_open_email">Open email: </string>
     <string name="toast_network_error">Network error: </string>
-
     <string name="toast_invalid_port">Invalid port format</string>
     <string name="toast_account_added">Account added!</string>
     <string name="toast_save_error">Save error: %s</string>
@@ -63,4 +62,7 @@
     <string name="toast_checking_credentials">Checking connection…</string>
     <string name="toast_auth_failed">Invalid email or password!</string>
     <string name="toast_connection_error">Connection error: %s</string>
+    <string name="format_from">From: %s</string>
+    <string name="format_to">To: %s</string>
+    <string name="no_subject">(No subject)</string>
 </resources>
