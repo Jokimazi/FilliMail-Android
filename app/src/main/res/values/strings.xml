@@ -6,17 +6,28 @@
     <string name="hint_email">Почта</string>
     <string name="hint_password">Пароль</string>
     <string name="btn_login">ВОЙТИ</string>
-
     <string name="title_advanced_settings">Настройки сервера</string>
     <string name="hint_imap_host">Сервер IMAP</string>
     <string name="hint_imap_port">Порт IMAP</string>
     <string name="hint_smtp_host">Сервер SMTP</string>
     <string name="hint_smtp_port">Порт SMTP</string>
     <string name="check_use_ssl">Использовать SSL</string>
-
     <string name="toast_searching_settings">Поиск настроек почты…</string>
     <string name="toast_settings_found">Настройки успешно найдены!</string>
     <string name="toast_settings_not_found">Настройки не найдены. Введите вручную.</string>
     <string name="toast_empty_fields">Заполните логин и пароль</string>
     <string name="lang_changed">Язык изменен на русский</string>
+    <string name="nav_all_mail">Вся почта</string>
+    <string name="nav_inbox">Входящие</string>
+    <string name="nav_sent">Исходящие</string>
+    <string name="nav_trash">Корзина</string>
+    <string name="nav_system">Система</string>
+    <string name="nav_settings">Настройки</string>
+    <string name="nav_accounts_manage">Аккаунты</string>
+    <string name="nav_about">О программе</string>
+    <string name="toast_loading">Загрузка: </string>
+    <string name="empty_state_no_emails">Нет писем</string>
+    <string name="desc_compose_fab">Написать письмо</string>
+    <string name="toast_open_email">Открыть письмо: </string>
+    <string name="toast_network_error">Ошибка сети: </string>
 </resources>

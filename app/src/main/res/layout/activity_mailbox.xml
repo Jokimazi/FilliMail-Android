@@ -23,19 +23,42 @@
                     android:id="@+id/toolbar"
                     android:layout_width="match_parent"
                     android:layout_height="?attr/actionBarSize"
-                    app:title="Входящие"
                     app:titleTextColor="?attr/colorOnPrimary"
-                    app:navigationIcon="@android:drawable/ic_menu_sort_by_size"
+                    app:subtitleTextColor="?attr/colorOnPrimary"
+                    app:navigationIcon="@drawable/ic_hamburger"
                     app:navigationIconTint="?attr/colorOnPrimary"
                     android:background="?attr/colorPrimary"/>
             </com.google.android.material.appbar.AppBarLayout>
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_emails"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:clipToPadding="false"
-                android:paddingBottom="80dp"/>
+                android:layout_height="match_parent">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recycler_emails"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:paddingBottom="80dp"/>
+
+                <TextView
+                    android:id="@+id/tv_empty_state"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/empty_state_no_emails"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:visibility="visible" />
+
+                <ProgressBar
+                    android:id="@+id/progress_loading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:visibility="gone" />
+            </FrameLayout>
 
         </LinearLayout>
 
@@ -45,7 +68,9 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_margin="16dp"
-            android:contentDescription="Написать письмо"
+            app:backgroundTint="@color/blue_logo"
+            app:tint="@android:color/white"
+            android:contentDescription="@string/desc_compose_fab"
             app:srcCompat="@android:drawable/ic_menu_edit" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
@@ -56,7 +81,6 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:fitsSystemWindows="true"
-        app:headerLayout="@layout/nav_header"
-        app:menu="@menu/drawer_menu" />
+        app:headerLayout="@layout/nav_header" />
 
 </androidx.drawerlayout.widget.DrawerLayout>

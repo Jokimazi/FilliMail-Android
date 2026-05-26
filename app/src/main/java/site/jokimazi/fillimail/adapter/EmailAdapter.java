@@ -1,4 +1,4 @@
-package site.jokimazi.fillimail;
+package site.jokimazi.fillimail.adapter;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -6,10 +6,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import java.util.ArrayList;
 import java.util.List;
 
+// ЭТОТ ИМПОРТ ОБЯЗАТЕЛЕН, ТАК КАК МЫ ТЕПЕРЬ В ДРУГОЙ ПАПКЕ
+import site.jokimazi.fillimail.R;
 import site.jokimazi.fillimail.model.EmailMessage;
 
 public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.EmailViewHolder> {
@@ -17,7 +18,6 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.EmailViewHol
     private final List<EmailMessage> emails = new ArrayList<>();
     private final OnEmailClickListener listener;
 
-    // Интерфейс для обработки кликов
     public interface OnEmailClickListener {
         void onEmailClick(EmailMessage email);
     }
@@ -30,6 +30,17 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.EmailViewHol
         emails.clear();
         emails.addAll(newEmails);
         notifyDataSetChanged();
+    }
+
+    public void addEmail(EmailMessage email) {
+        emails.add(email);
+        notifyItemInserted(emails.size() - 1);
+    }
+
+    public void clear() {
+        int size = emails.size();
+        emails.clear();
+        notifyItemRangeRemoved(0, size);
     }
 
     @NonNull
@@ -48,7 +59,6 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.EmailViewHol
         String subject = (email.subject != null && !email.subject.isEmpty()) ? email.subject : "(Без темы)";
         holder.tvSubject.setText(subject);
 
-        // Вешаем слушатель клика на всю строчку
         holder.itemView.setOnClickListener(v -> listener.onEmailClick(email));
     }
 
