@@ -8,9 +8,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.ActionMode;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import com.google.android.material.navigation.NavigationView;
 import java.util.ArrayList;
@@ -18,7 +20,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Session;
 import javax.mail.Store;
@@ -51,6 +55,8 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
     private String serverFolderName = "INBOX";
     private String currentDisplayFolder;
 
+    private ActionMode actionMode;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,10 +79,25 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
 
         binding.navView.setNavigationItemSelectedListener(this);
 
-        emailAdapter = new EmailAdapter(email -> {
-            Intent intent = new Intent(this, ReadEmailActivity.class);
-            intent.putExtra("email_object", email);
-            startActivity(intent);
+        emailAdapter = new EmailAdapter(new EmailAdapter.OnEmailClickListener() {
+            @Override
+            public void onEmailClick(EmailMessage email) {
+                Intent intent = new Intent(MailboxActivity.this, ReadEmailActivity.class);
+                intent.putExtra("email_object", email);
+                startActivity(intent);
+            }
+
+            @Override
+            public void onSelectionChanged(int count) {
+                if (count > 0) {
+                    if (actionMode == null) {
+                        actionMode = startSupportActionMode(actionModeCallback);
+                    }
+                    actionMode.setTitle(String.valueOf(count));
+                } else if (actionMode != null) {
+                    actionMode.finish();
+                }
+            }
         });
 
         binding.recyclerEmails.setLayoutManager(new LinearLayoutManager(this));
@@ -100,6 +121,143 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
     protected void onResume() {
         super.onResume();
         loadAccountsAndBuildMenu();
+    }
+
+    private final ActionMode.Callback actionModeCallback = new ActionMode.Callback() {
+        @Override
+        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+            menu.add(Menu.NONE, 1, Menu.NONE, getString(R.string.action_delete))
+                    .setIcon(android.R.drawable.ic_menu_delete)
+                    .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+
+            boolean isTrash = serverFolderName.toLowerCase().contains("trash") || serverFolderName.toLowerCase().contains("корзина");
+            if (isTrash) {
+                menu.add(Menu.NONE, 2, Menu.NONE, getString(R.string.action_restore))
+                        .setIcon(android.R.drawable.ic_menu_revert)
+                        .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+            }
+            return true;
+        }
+
+        @Override
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            return false;
+        }
+
+        @Override
+        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            if (item.getItemId() == 1) {
+                processSelectedEmails(false);
+                mode.finish();
+                return true;
+            } else if (item.getItemId() == 2) {
+                processSelectedEmails(true);
+                mode.finish();
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public void onDestroyActionMode(ActionMode mode) {
+            emailAdapter.clearSelection();
+            actionMode = null;
+        }
+    };
+
+    private void processSelectedEmails(boolean isRestore) {
+        List<EmailMessage> selected = emailAdapter.getSelectedEmails();
+        if (selected.isEmpty()) return;
+
+        Toast.makeText(this, getString(isRestore ? R.string.toast_restoring : R.string.toast_deleting), Toast.LENGTH_SHORT).show();
+
+        emailAdapter.removeEmails(selected);
+        String cacheKey = currentEmailKey + "_" + serverFolderName;
+        if (memoryCache.containsKey(cacheKey)) {
+            memoryCache.get(cacheKey).removeAll(selected);
+        }
+
+        new Thread(() -> {
+            try {
+                Map<Integer, Map<String, List<Long>>> grouped = new HashMap<>();
+                for (EmailMessage em : selected) {
+                    if (!grouped.containsKey(em.accountId)) {
+                        grouped.put(em.accountId, new HashMap<>());
+                    }
+                    Map<String, List<Long>> folderMap = grouped.get(em.accountId);
+                    if (!folderMap.containsKey(em.folderName)) {
+                        folderMap.put(em.folderName, new ArrayList<>());
+                    }
+                    folderMap.get(em.folderName).add(em.uid);
+                }
+
+                for (Map.Entry<Integer, Map<String, List<Long>>> accEntry : grouped.entrySet()) {
+                    EmailAccount targetAccount = null;
+                    for (EmailAccount acc : accountList) {
+                        if (acc.getId() == accEntry.getKey()) {
+                            targetAccount = acc;
+                            break;
+                        }
+                    }
+                    if (targetAccount == null) continue;
+
+                    Properties props = new Properties();
+                    props.setProperty("mail.store.protocol", "imaps");
+                    Session session = Session.getInstance(props);
+                    Store store = session.getStore("imaps");
+                    store.connect(targetAccount.getImapHost(), targetAccount.getImapPort(), targetAccount.getEmail(), targetAccount.getPassword());
+
+                    Folder destFolder = null;
+                    if (isRestore) {
+                        destFolder = store.getFolder("INBOX");
+                    } else {
+                        for (Folder f : store.getDefaultFolder().list("*")) {
+                            String name = f.getName().toLowerCase();
+                            if (name.contains("trash") || name.contains("корзина") || name.contains("deleted")) {
+                                destFolder = f;
+                                break;
+                            }
+                        }
+                    }
+
+                    for (Map.Entry<String, List<Long>> folderEntry : accEntry.getValue().entrySet()) {
+                        String fName = folderEntry.getKey();
+                        List<Long> uidsList = folderEntry.getValue();
+
+                        long[] uids = new long[uidsList.size()];
+                        for (int i = 0; i < uidsList.size(); i++) {
+                            uids[i] = uidsList.get(i);
+                        }
+
+                        Folder srcFolder = store.getFolder(fName);
+                        srcFolder.open(Folder.READ_WRITE);
+
+                        javax.mail.Message[] msgs = ((UIDFolder) srcFolder).getMessagesByUID(uids);
+
+                        boolean isTrash = fName.toLowerCase().contains("trash") || fName.toLowerCase().contains("корзина");
+
+                        if (isRestore) {
+                            if (destFolder != null && !destFolder.getFullName().equals(srcFolder.getFullName())) {
+                                srcFolder.copyMessages(msgs, destFolder);
+                            }
+                        } else {
+                            if (!isTrash && destFolder != null && !destFolder.getFullName().equals(srcFolder.getFullName())) {
+                                srcFolder.copyMessages(msgs, destFolder);
+                            }
+                        }
+
+                        srcFolder.setFlags(msgs, new Flags(Flags.Flag.DELETED), true);
+                        srcFolder.expunge();
+                        srcFolder.close(false);
+                    }
+                    store.close();
+                }
+
+                runOnUiThread(() -> Toast.makeText(this, getString(isRestore ? R.string.toast_restored : R.string.toast_deleted), Toast.LENGTH_SHORT).show());
+            } catch (Exception e) {
+                runOnUiThread(() -> Toast.makeText(this, getString(isRestore ? R.string.toast_restore_error : R.string.toast_delete_error), Toast.LENGTH_SHORT).show());
+            }
+        }).start();
     }
 
     private void loadAccountsAndBuildMenu() {
@@ -209,6 +367,10 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        if (actionMode != null) {
+            actionMode.finish();
+        }
+
         int id = item.getItemId();
         if (id == R.id.nav_all_mail) {
             expandedEmail = "all".equals(expandedEmail) ? null : "all";
@@ -292,13 +454,29 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
 
                                 String senderName = "";
                                 String senderEmail = "";
-                                if (msg.getFrom() != null && msg.getFrom().length > 0) {
-                                    if (msg.getFrom()[0] instanceof InternetAddress) {
-                                        InternetAddress addr = (InternetAddress) msg.getFrom()[0];
-                                        senderName = addr.getPersonal();
-                                        senderEmail = addr.getAddress();
-                                    } else {
-                                        senderEmail = msg.getFrom()[0].toString();
+
+                                boolean isSentFolder = folderName.equalsIgnoreCase("Sent") || folderName.equalsIgnoreCase("Отправленные");
+
+                                if (isSentFolder) {
+                                    javax.mail.Address[] recipients = msg.getRecipients(javax.mail.Message.RecipientType.TO);
+                                    if (recipients != null && recipients.length > 0) {
+                                        if (recipients[0] instanceof InternetAddress) {
+                                            InternetAddress addr = (InternetAddress) recipients[0];
+                                            senderName = addr.getPersonal();
+                                            senderEmail = addr.getAddress();
+                                        } else {
+                                            senderEmail = recipients[0].toString();
+                                        }
+                                    }
+                                } else {
+                                    if (msg.getFrom() != null && msg.getFrom().length > 0) {
+                                        if (msg.getFrom()[0] instanceof InternetAddress) {
+                                            InternetAddress addr = (InternetAddress) msg.getFrom()[0];
+                                            senderName = addr.getPersonal();
+                                            senderEmail = addr.getAddress();
+                                        } else {
+                                            senderEmail = msg.getFrom()[0].toString();
+                                        }
                                     }
                                 }
 

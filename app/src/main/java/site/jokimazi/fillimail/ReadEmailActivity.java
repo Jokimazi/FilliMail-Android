@@ -56,12 +56,20 @@ public class ReadEmailActivity extends AppCompatActivity {
         EmailMessage email = (EmailMessage) getIntent().getSerializableExtra("email_object");
 
         if (email != null) {
+            boolean isSentFolder = email.folderName != null && (email.folderName.equalsIgnoreCase("Sent") || email.folderName.equalsIgnoreCase("Отправленные"));
+
             String displayName = (email.senderName != null && !email.senderName.isEmpty())
                     ? email.senderName + " <" + email.senderEmail + ">"
                     : email.senderEmail;
 
-            tvSender.setText(getString(R.string.format_from, displayName));
-            tvReceiver.setText(getString(R.string.format_to, email.receiver));
+            if (isSentFolder) {
+                tvSender.setText(getString(R.string.format_from, email.receiver));
+                tvReceiver.setText(getString(R.string.format_to, displayName));
+            } else {
+                tvSender.setText(getString(R.string.format_from, displayName));
+                tvReceiver.setText(getString(R.string.format_to, email.receiver));
+            }
+
             tvSubject.setText(email.subject);
 
             tvBodyPlain.setVisibility(View.VISIBLE);

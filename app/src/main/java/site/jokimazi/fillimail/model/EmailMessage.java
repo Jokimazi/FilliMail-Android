@@ -28,6 +28,10 @@ public class EmailMessage implements Serializable {
         this.date = date;
     }
 
+    public String getUniqueKey() {
+        return accountId + "_" + folderName + "_" + uid;
+    }
+
     public String getGravatarUrl() {
         if (senderEmail == null || senderEmail.isEmpty()) {
             return "";

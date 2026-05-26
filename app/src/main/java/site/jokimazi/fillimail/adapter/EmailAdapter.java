@@ -1,6 +1,8 @@
 package site.jokimazi.fillimail.adapter;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,19 +14,24 @@ import com.bumptech.glide.Glide;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import site.jokimazi.fillimail.R;
 import site.jokimazi.fillimail.model.EmailMessage;
 
 public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.EmailViewHolder> {
 
     private final List<EmailMessage> emails = new ArrayList<>();
+    private final Set<String> selectedKeys = new HashSet<>();
     private final OnEmailClickListener listener;
     private boolean showReceiver = false;
+    private boolean isSelectionMode = false;
 
     public interface OnEmailClickListener {
         void onEmailClick(EmailMessage email);
+        void onSelectionChanged(int count);
     }
 
     public EmailAdapter(OnEmailClickListener listener) {
@@ -71,6 +78,39 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.EmailViewHol
         notifyItemRangeRemoved(0, size);
     }
 
+    public void toggleSelection(String uniqueKey) {
+        if (selectedKeys.contains(uniqueKey)) {
+            selectedKeys.remove(uniqueKey);
+        } else {
+            selectedKeys.add(uniqueKey);
+        }
+        isSelectionMode = !selectedKeys.isEmpty();
+        listener.onSelectionChanged(selectedKeys.size());
+        notifyDataSetChanged();
+    }
+
+    public void clearSelection() {
+        selectedKeys.clear();
+        isSelectionMode = false;
+        notifyDataSetChanged();
+        listener.onSelectionChanged(0);
+    }
+
+    public List<EmailMessage> getSelectedEmails() {
+        List<EmailMessage> selected = new ArrayList<>();
+        for (EmailMessage m : emails) {
+            if (selectedKeys.contains(m.getUniqueKey())) {
+                selected.add(m);
+            }
+        }
+        return selected;
+    }
+
+    public void removeEmails(List<EmailMessage> toRemove) {
+        emails.removeAll(toRemove);
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public EmailViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -84,14 +124,25 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.EmailViewHol
         EmailMessage email = emails.get(position);
         Context context = holder.itemView.getContext();
 
+        boolean isSentFolder = email.folderName != null && (email.folderName.equalsIgnoreCase("Sent") || email.folderName.equalsIgnoreCase("Отправленные"));
         String displayName = (email.senderName != null && !email.senderName.isEmpty()) ? email.senderName : email.senderEmail;
-        holder.tvSender.setText(context.getString(R.string.format_from, displayName));
 
-        if (showReceiver && email.receiver != null) {
-            holder.tvReceiver.setVisibility(View.VISIBLE);
-            holder.tvReceiver.setText(context.getString(R.string.format_to, email.receiver));
+        if (isSentFolder) {
+            holder.tvSender.setText(context.getString(R.string.format_to, displayName));
+            if (showReceiver && email.receiver != null) {
+                holder.tvReceiver.setVisibility(View.VISIBLE);
+                holder.tvReceiver.setText(context.getString(R.string.format_from, email.receiver));
+            } else {
+                holder.tvReceiver.setVisibility(View.GONE);
+            }
         } else {
-            holder.tvReceiver.setVisibility(View.GONE);
+            holder.tvSender.setText(context.getString(R.string.format_from, displayName));
+            if (showReceiver && email.receiver != null) {
+                holder.tvReceiver.setVisibility(View.VISIBLE);
+                holder.tvReceiver.setText(context.getString(R.string.format_to, email.receiver));
+            } else {
+                holder.tvReceiver.setVisibility(View.GONE);
+            }
         }
 
         if (email.date != null) {
@@ -112,7 +163,27 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.EmailViewHol
                 .error(android.R.drawable.ic_menu_myplaces)
                 .into(holder.ivAvatar);
 
-        holder.itemView.setOnClickListener(v -> listener.onEmailClick(email));
+        boolean isSelected = selectedKeys.contains(email.getUniqueKey());
+        if (isSelected) {
+            TypedValue typedValue = new TypedValue();
+            context.getTheme().resolveAttribute(android.R.attr.colorControlHighlight, typedValue, true);
+            holder.itemView.setBackgroundColor(typedValue.data);
+        } else {
+            holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+        }
+
+        holder.itemView.setOnClickListener(v -> {
+            if (isSelectionMode) {
+                toggleSelection(email.getUniqueKey());
+            } else {
+                listener.onEmailClick(email);
+            }
+        });
+
+        holder.itemView.setOnLongClickListener(v -> {
+            toggleSelection(email.getUniqueKey());
+            return true;
+        });
     }
 
     @Override

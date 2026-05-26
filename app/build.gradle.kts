@@ -10,8 +10,8 @@ android {
         applicationId = "site.jokimazi.fillimail"
         minSdk = 30
         targetSdk = 36
-        versionCode = 9
-        versionName = "1.3.5-Alpha"
+        versionCode = 10
+        versionName = "1.4.0-Alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -63,4 +63,14 @@
     <string name="format_from">От: %s</string>
     <string name="format_to">Кому: %s</string>
     <string name="no_subject">(Без темы)</string>
+    <string name="action_delete">Удалить</string>
+    <string name="toast_deleting">Удаление…</string>
+    <string name="toast_deleted">Успешно удалено</string>
+    <string name="toast_delete_error">Ошибка при удалении</string>
+    <string name="action_restore">Восстановить</string>
+    <string name="toast_restoring">Восстановление…</string>
+    <string name="toast_restored">Успешно восстановлено</string>
+    <string name="toast_restore_error">Ошибка при восстановлении</string>
+    <string name="title_settings">Настройки</string>
+    <string name="title_about">О нас</string>
 </resources>
