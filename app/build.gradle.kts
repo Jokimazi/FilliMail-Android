@@ -32,8 +32,8 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true     // ← включаем XML + View Binding
-        compose = false        // ← отключаем Compose
+        viewBinding = true
+        compose = false
     }
 
     packaging {

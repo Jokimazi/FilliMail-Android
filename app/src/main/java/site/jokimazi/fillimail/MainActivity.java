@@ -25,7 +25,6 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Проверяем, есть ли аккаунт в базе (если да — сразу на почту)
         new Thread(() -> {
             List<EmailAccount> accounts = App.getInstance().getDatabase().accountDao().getAllAccounts();
             if (!accounts.isEmpty()) {
@@ -36,17 +35,14 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
 
-        // Слушатель для золотой звёздочки (смена языка)
         binding.btnLangStar.setOnClickListener(v -> toggleLanguage());
 
-        // Автоопределение настроек при потере фокуса с поля Email
         binding.etEmail.setOnFocusChangeListener((v, hasFocus) -> {
             if (!hasFocus) {
                 autoDetectSettings();
             }
         });
 
-        // Логика нажатия кнопки Войти
         binding.btnLogin.setOnClickListener(v -> loginAndSave());
     }
 
@@ -57,7 +53,6 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, R.string.toast_searching_settings, Toast.LENGTH_SHORT).show();
         String domain = email.substring(email.indexOf("@") + 1).toLowerCase();
 
-        // Логика базы данных популярных доменов
         String imapHost = "";
         String smtpHost = "";
         int imapPort = 993;
@@ -83,21 +78,18 @@ public class MainActivity extends AppCompatActivity {
                 smtpHost = "smtp.mail.ru";
                 break;
             default:
-                // Если личный сервер почты — оставляем пустым, чтобы пользователь ввёл сам
                 found = false;
                 imapHost = "mail." + domain;
                 smtpHost = "mail." + domain;
                 break;
         }
 
-        // Заполняем поля формы
         binding.etImapHost.setText(imapHost);
         binding.etImapPort.setText(String.valueOf(imapPort));
         binding.etSmtpHost.setText(smtpHost);
         binding.etSmtpPort.setText(String.valueOf(smtpPort));
         binding.cbSsl.setChecked(true);
 
-        // Плавно показываем блок ручной настройки
         if (!isAdvancedVisible) {
             binding.layoutAdvancedSettings.setVisibility(View.VISIBLE);
             isAdvancedVisible = true;
@@ -124,9 +116,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // Сохраняем в Room
         new Thread(() -> {
-            // Передаем все 7 параметров прямо в конструктор в нужном порядке
             EmailAccount account = new EmailAccount(
                     email,
                     password,
@@ -146,7 +136,6 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
-    // Принудительное динамическое переключение языка через звёздочку
     private void toggleLanguage() {
         Resources res = getResources();
         Configuration conf = res.getConfiguration();
@@ -159,7 +148,6 @@ public class MainActivity extends AppCompatActivity {
         conf.setLocale(locale);
         res.updateConfiguration(conf, res.getDisplayMetrics());
 
-        // Перезапускаем активити, чтобы применить новый язык интерфейса
         Intent intent = getIntent();
         finish();
         startActivity(intent);

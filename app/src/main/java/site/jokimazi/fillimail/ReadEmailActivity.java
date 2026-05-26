@@ -45,12 +45,10 @@ public class ReadEmailActivity extends AppCompatActivity {
     private void loadEmailBody(EmailMessage email) {
         new Thread(() -> {
             try {
-                // 1. Берем все наши аккаунты
                 List<EmailAccount> accounts = App.getInstance().getDatabase().accountDao().getAllAccounts();
                 Message msg = null;
                 EmailAccount targetAccount = null;
 
-                // 2. Ищем письмо, перебирая все наши ящики
                 for (EmailAccount acc : accounts) {
                     Properties props = new Properties();
                     props.setProperty("mail.store.protocol", "imaps");
@@ -61,7 +59,6 @@ public class ReadEmailActivity extends AppCompatActivity {
                         Folder folder = store.getFolder("INBOX");
                         folder.open(Folder.READ_ONLY);
 
-                        // Ищем письмо в этом ящике
                         for (Message m : folder.getMessages()) {
                             if (m.getSubject() != null && m.getSubject().equals(email.subject)) {
                                 msg = m;
@@ -69,10 +66,10 @@ public class ReadEmailActivity extends AppCompatActivity {
                                 break;
                             }
                         }
-                        if (msg != null) break; // Нашли!
+                        if (msg != null) break;
                         folder.close(false);
                         store.close();
-                    } catch (Exception e) { continue; } // Если не этот ящик, пробуем следующий
+                    } catch (Exception e) { continue; }
                 }
 
                 if (msg != null) {
@@ -105,7 +102,6 @@ public class ReadEmailActivity extends AppCompatActivity {
             if (bodyPart.isMimeType("text/plain")) {
                 result.append(bodyPart.getContent());
             } else if (bodyPart.isMimeType("text/html")) {
-                // Если HTML - пока просто берем текст, позже можно подключить парсер
                 result.append(bodyPart.getContent().toString().replaceAll("<[^>]*>", ""));
             } else if (bodyPart.getContent() instanceof javax.mail.Multipart) {
                 result.append(getTextFromMultipart((javax.mail.Multipart) bodyPart.getContent()));

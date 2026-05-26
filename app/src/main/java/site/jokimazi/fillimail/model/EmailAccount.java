@@ -8,7 +8,7 @@ import java.io.Serializable;
 public class EmailAccount implements Serializable {
 
     @PrimaryKey(autoGenerate = true)
-    private int id; // Нужен первичный ключ для БД
+    private int id;
 
     private final String email;
     private final String password;
@@ -29,7 +29,6 @@ public class EmailAccount implements Serializable {
         this.useSSL = useSSL;
     }
 
-    // Геттеры и сеттеры (сеттер для ID нужен Room'у)
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public String getEmail() { return email; }

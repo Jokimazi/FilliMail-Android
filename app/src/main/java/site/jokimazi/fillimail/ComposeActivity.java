@@ -62,14 +62,12 @@ public class ComposeActivity extends AppCompatActivity {
         executor.execute(() -> {
             try {
                 Properties props = new Properties();
-                // Всегда используем префикс smtp, но включаем SSL отдельным флагом
                 props.put("mail.smtp.host", currentAccount.getSmtpHost());
                 props.put("mail.smtp.port", String.valueOf(currentAccount.getSmtpPort()));
                 props.put("mail.smtp.auth", "true");
 
                 if (currentAccount.isUseSSL()) {
                     props.put("mail.smtp.ssl.enable", "true");
-                    // Доверяем любому сертификату (важно для личных серверов)
                     props.put("mail.smtp.ssl.trust", "*");
                 }
 

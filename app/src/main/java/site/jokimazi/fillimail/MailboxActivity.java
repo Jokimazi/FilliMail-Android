@@ -120,8 +120,6 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
             for (String folderName : sorted) {
                 int folderItemId = dynamicIdCounter++;
 
-                // --- ВОТ ТУТ БЫЛА ОШИБКА ---
-                // Раньше ты объявлял displayName, но в menu.add использовал folderName
                 String displayName = folderName;
                 String iconChar = "📁 ";
 
@@ -137,7 +135,6 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
                 }
 
                 String fullItemText = "▶ " + iconChar + displayName;
-                // Использовать нужно именно displayName!
                 menu.add(Menu.NONE, folderItemId, startOrder++, fullItemText);
 
                 folderActionMap.put(folderItemId, new FolderAction(emailKey, folderName, displayName));
@@ -145,7 +142,6 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
         }
     }
 
-    // Вынес сортировку в отдельный метод, чтобы drawFolders был чистым
     private List<String> sortFolders(List<String> folders) {
         List<String> sorted = new ArrayList<>();
         List<String> others = new ArrayList<>();
@@ -205,7 +201,6 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
     }
 
     private void loadEmailsForAccount(String email, String serverFolderName, String displayFolderName) {
-        // Добавь это в начало метода, чтобы заголовок менялся
         binding.toolbar.setTitle(displayFolderName);
         binding.toolbar.setSubtitle(email.equals("all") ? getString(R.string.nav_all_mail) : email);
 
@@ -241,7 +236,6 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
                             if (currentLoadId != myLoadId) break;
                             EmailMessage newEmail = new EmailMessage(msg.getFrom()[0].toString(), msg.getSubject(), "");
 
-                            // ФИНАЛЬНАЯ ПОПРАВКА: создаем final копию
                             final boolean finalHasEmails = true;
                             runOnUiThread(() -> {
                                 if (currentLoadId == myLoadId) {
