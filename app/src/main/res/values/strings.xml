@@ -83,4 +83,10 @@
     <string name="lang_system">Системный</string>
     <string name="app_version_format">Версия: %s</string>
     <string name="app_developer">Разработчик: Jokimazi</string>
+    <string name="compose_to">Кому</string>
+    <string name="compose_subject">Тема</string>
+    <string name="compose_body">Текст сообщения</string>
+    <string name="action_send">Отправить</string>
+    <string name="toast_sent">Успешно отправлено</string>
+    <string name="toast_no_account">Выберите аккаунт отправителя</string>
 </resources>

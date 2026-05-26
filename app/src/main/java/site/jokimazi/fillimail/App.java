@@ -14,18 +14,16 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
         instance = this;
-        database = Room.databaseBuilder(this, AppDatabase.class, "fillimail_db").build();
+        // fallbackToDestructiveMigration пересоздаст базу, если мы добавим новые поля (как с SMTP)
+        database = Room.databaseBuilder(this, AppDatabase.class, "fillimail_db")
+                .fallbackToDestructiveMigration()
+                .build();
 
         SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
         int theme = prefs.getInt("theme", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
         AppCompatDelegate.setDefaultNightMode(theme);
     }
 
-    public static App getInstance() {
-        return instance;
-    }
-
-    public AppDatabase getDatabase() {
-        return database;
-    }
+    public static App getInstance() { return instance; }
+    public AppDatabase getDatabase() { return database; }
 }

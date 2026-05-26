@@ -67,7 +67,7 @@ public class AddAccountActivity extends AppCompatActivity {
                     etImapPort.setText(String.valueOf(finalTarget.getImapPort()));
                     etSmtpHost.setText(finalTarget.getSmtpHost());
                     etSmtpPort.setText(String.valueOf(finalTarget.getSmtpPort()));
-                    cbSsl.setChecked(finalTarget.isUseSSL());
+                    cbSsl.setChecked(finalTarget.ssl);
                 });
             }
         }).start();
@@ -165,7 +165,7 @@ public class AddAccountActivity extends AppCompatActivity {
                 EmailAccount account = new EmailAccount(email, password, imapHost, imapPort, smtpHost, smtpPort, useSsl);
 
                 if (editAccountId != -1) {
-                    account.setId(editAccountId);
+                    account.id = editAccountId;
                     App.getInstance().getDatabase().accountDao().update(account);
                 } else {
                     App.getInstance().getDatabase().accountDao().insert(account);

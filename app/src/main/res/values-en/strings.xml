@@ -83,4 +83,10 @@
     <string name="lang_system">System Default</string>
     <string name="app_version_format">Version: %s</string>
     <string name="app_developer">Developer: Jokimazi</string>
+    <string name="compose_to">To</string>
+    <string name="compose_subject">Subject</string>
+    <string name="compose_body">Compose email</string>
+    <string name="action_send">Send</string>
+    <string name="toast_sent">Successfully sent</string>
+    <string name="toast_no_account">Select sender account</string>
 </resources>
