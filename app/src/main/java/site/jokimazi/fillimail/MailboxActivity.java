@@ -217,7 +217,6 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
     }
 
     private void loadEmailsForAccount(String email, String serverFolderName, String displayFolderName) {
-        // Запоминаем текущий выбор
         this.currentEmailKey = email;
         this.currentServerFolder = serverFolderName;
         this.currentDisplayFolder = displayFolderName;
@@ -233,7 +232,6 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
         binding.tvEmptyState.setVisibility(View.GONE);
 
         new Thread(() -> {
-            List<EmailMessage> combinedList = new ArrayList<>();
             try {
                 List<EmailAccount> targetAccounts = new ArrayList<>();
                 if (email.equals("all")) targetAccounts.addAll(accountList);
@@ -264,7 +262,15 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
                                 if (messageDate == null) messageDate = msg.getSentDate();
                                 if (messageDate == null) messageDate = new Date(0);
 
-                                combinedList.add(new EmailMessage(msgUid, account.getId(), msg.getFrom()[0].toString(), msg.getSubject(), "", messageDate));
+                                EmailMessage newEmail = new EmailMessage(msgUid, account.getId(), msg.getFrom()[0].toString(), msg.getSubject(), "", messageDate);
+
+                                // ИСПРАВЛЕНИЕ: Стримим каждое письмо в UI-поток мгновенно на лету
+                                runOnUiThread(() -> {
+                                    if (currentLoadId == myLoadId) {
+                                        emailAdapter.addEmailSorted(newEmail); // Вставляем в правильное место
+                                        binding.progressLoading.setVisibility(View.GONE); // Скрываем лоадер сразу при первом письме
+                                    }
+                                });
                             }
                         }
                         folder.close(false); store.close();
@@ -273,20 +279,17 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
                     }
                 }
 
-                combinedList.sort((m1, m2) -> {
-                    if (m1.date == null || m2.date == null) return 0;
-                    return m2.date.compareTo(m1.date);
-                });
-
+                // В самом конце, когда все аккаунты прошлись, проверяем — пусто ли
                 runOnUiThread(() -> {
                     if (currentLoadId == myLoadId) {
-                        emailAdapter.setEmails(combinedList);
                         binding.progressLoading.setVisibility(View.GONE);
-                        if (combinedList.isEmpty()) binding.tvEmptyState.setVisibility(View.VISIBLE);
+                        if (emailAdapter.getItemCount() == 0) {
+                            binding.tvEmptyState.setVisibility(View.VISIBLE);
+                        }
                     }
                 });
             } catch (Exception e) {
-                Log.e(TAG, "Глобальная ошибка миксования писем", e);
+                Log.e(TAG, "Глобальная ошибка стриминга писем", e);
                 runOnUiThread(() -> binding.progressLoading.setVisibility(View.GONE));
             }
         }).start();

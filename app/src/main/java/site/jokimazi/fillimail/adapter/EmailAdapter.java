@@ -7,6 +7,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import site.jokimazi.fillimail.R;
 import site.jokimazi.fillimail.model.EmailMessage;
@@ -30,9 +31,24 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.EmailViewHol
         notifyDataSetChanged();
     }
 
-    public void addEmail(EmailMessage email) {
-        emails.add(email);
-        notifyItemInserted(emails.size() - 1);
+    // ИСПРАВЛЕНИЕ: Метод динамической вставки письма в нужную хронологическую позицию
+    public void addEmailSorted(EmailMessage email) {
+        int index = 0;
+        for (int i = 0; i < emails.size(); i++) {
+            Date existingDate = emails.get(i).date;
+
+            // Сортируем от новых к старым (descending).
+            // Если дата пришедшего письма свежее, чем у текущего в списке — это его место.
+            if (email.date != null && existingDate != null) {
+                if (email.date.after(existingDate)) {
+                    break;
+                }
+            }
+            index++;
+        }
+
+        emails.add(index, email);
+        notifyItemInserted(index);
     }
 
     public void clear() {
