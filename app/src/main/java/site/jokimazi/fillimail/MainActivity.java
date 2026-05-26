@@ -5,12 +5,9 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-
-import java.util.List;
 import java.util.Properties;
 import javax.mail.Session;
 import javax.mail.Store;
-
 import site.jokimazi.fillimail.databinding.ActivityMainBinding;
 import site.jokimazi.fillimail.model.EmailAccount;
 
@@ -24,16 +21,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
-        new Thread(() -> {
-            List<EmailAccount> accounts = App.getInstance().getDatabase().accountDao().getAllAccounts();
-            if (!accounts.isEmpty()) {
-                runOnUiThread(() -> {
-                    startActivity(new Intent(MainActivity.this, MailboxActivity.class));
-                    finish();
-                });
-            }
-        }).start();
 
         binding.btnLangStar.setOnClickListener(v -> Toast.makeText(this, "Не тыкай)", Toast.LENGTH_SHORT).show());
 

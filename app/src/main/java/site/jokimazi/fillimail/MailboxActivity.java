@@ -39,6 +39,11 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
     private static final String TAG = "FilliMail_Net";
     private static final HashMap<String, List<EmailMessage>> memoryCache = new HashMap<>();
 
+    private static final int ID_ALL_MAIL = 100;
+    private static final int ID_SETTINGS = 9001;
+    private static final int ID_ACCOUNTS_MANAGE = 9002;
+    private static final int ID_ABOUT = 9003;
+
     private ActivityMailboxBinding binding;
     private List<EmailAccount> accountList = new ArrayList<>();
     private EmailAdapter emailAdapter;
@@ -63,9 +68,19 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
         binding = ActivityMailboxBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        currentDisplayFolder = getString(R.string.nav_inbox);
+        if (savedInstanceState != null) {
+            currentEmailKey = savedInstanceState.getString("currentEmailKey", "all");
+            serverFolderName = savedInstanceState.getString("serverFolderName", "INBOX");
+            currentDisplayFolder = savedInstanceState.getString("currentDisplayFolder", getString(R.string.nav_inbox));
+            expandedEmail = savedInstanceState.getString("expandedEmail", null);
+        } else {
+            currentDisplayFolder = getString(R.string.nav_inbox);
+        }
 
         setSupportActionBar(binding.toolbar);
+
+        binding.toolbar.setTitle(currentDisplayFolder);
+        binding.toolbar.setSubtitle(currentEmailKey.equals("all") ? getString(R.string.nav_all_mail) : currentEmailKey);
 
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, binding.drawerLayout, binding.toolbar, R.string.dialog_yes, R.string.dialog_no);
@@ -111,10 +126,16 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
 
         binding.fabCompose.setOnClickListener(v -> startActivity(new Intent(this, ComposeActivity.class)));
 
-        binding.toolbar.setTitle(getString(R.string.nav_inbox));
-        binding.toolbar.setSubtitle(getString(R.string.nav_all_mail));
-
         foldersCache.put("all", new ArrayList<>(Arrays.asList("INBOX", "Sent", "Trash")));
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString("currentEmailKey", currentEmailKey);
+        outState.putString("serverFolderName", serverFolderName);
+        outState.putString("currentDisplayFolder", currentDisplayFolder);
+        outState.putString("expandedEmail", expandedEmail);
     }
 
     @Override
@@ -285,7 +306,7 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
         folderActionMap.clear();
         dynamicIdCounter = 1000;
 
-        MenuItem allMailItem = menu.add(Menu.NONE, R.id.nav_all_mail, 0, getString(R.string.nav_all_mail));
+        MenuItem allMailItem = menu.add(Menu.NONE, ID_ALL_MAIL, 0, getString(R.string.nav_all_mail));
         allMailItem.setIcon(android.R.drawable.ic_dialog_email);
         if ("all".equals(expandedEmail)) drawFolders(menu, "all", 1);
 
@@ -300,9 +321,9 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
         }
 
         SubMenu systemMenu = menu.addSubMenu(Menu.NONE, Menu.NONE, 9999, getString(R.string.nav_system));
-        systemMenu.add(Menu.NONE, R.id.nav_settings, 10000, getString(R.string.nav_settings)).setIcon(android.R.drawable.ic_menu_preferences);
-        systemMenu.add(Menu.NONE, R.id.nav_accounts_manage, 10001, getString(R.string.nav_accounts_manage)).setIcon(android.R.drawable.ic_menu_myplaces);
-        systemMenu.add(Menu.NONE, R.id.nav_about, 10002, getString(R.string.nav_about)).setIcon(android.R.drawable.ic_menu_info_details);
+        systemMenu.add(Menu.NONE, ID_SETTINGS, 10000, getString(R.string.nav_settings)).setIcon(android.R.drawable.ic_menu_preferences);
+        systemMenu.add(Menu.NONE, ID_ACCOUNTS_MANAGE, 10001, getString(R.string.nav_accounts_manage)).setIcon(android.R.drawable.ic_menu_myplaces);
+        systemMenu.add(Menu.NONE, ID_ABOUT, 10002, getString(R.string.nav_about)).setIcon(android.R.drawable.ic_menu_info_details);
     }
 
     private void drawFolders(Menu menu, String emailKey, int startOrder) {
@@ -372,13 +393,17 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
         }
 
         int id = item.getItemId();
-        if (id == R.id.nav_all_mail) {
+        if (id == ID_ALL_MAIL) {
             expandedEmail = "all".equals(expandedEmail) ? null : "all";
             triggerRebuildMenu();
             return true;
-        } else if (id == R.id.nav_settings || id == R.id.nav_accounts_manage || id == R.id.nav_about) {
-            if (id == R.id.nav_accounts_manage) {
+        } else if (id == ID_SETTINGS || id == ID_ACCOUNTS_MANAGE || id == ID_ABOUT) {
+            if (id == ID_ACCOUNTS_MANAGE) {
                 startActivity(new Intent(this, ManageAccountsActivity.class));
+            } else if (id == ID_SETTINGS) {
+                startActivity(new Intent(this, SettingsActivity.class));
+            } else if (id == ID_ABOUT) {
+                startActivity(new Intent(this, AboutActivity.class));
             }
             binding.drawerLayout.close(); return true;
         }

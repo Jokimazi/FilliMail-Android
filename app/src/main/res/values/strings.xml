@@ -24,7 +24,7 @@
     <string name="nav_system">Система</string>
     <string name="nav_settings">Настройки</string>
     <string name="nav_accounts_manage">Аккаунты</string>
-    <string name="nav_about">О программе</string>
+    <string name="nav_about">О нас</string>
     <string name="toast_loading">Загрузка: </string>
     <string name="empty_state_no_emails">Нет писем</string>
     <string name="desc_compose_fab">Написать письмо</string>
@@ -73,4 +73,14 @@
     <string name="toast_restore_error">Ошибка при восстановлении</string>
     <string name="title_settings">Настройки</string>
     <string name="title_about">О нас</string>
+    <string name="settings_theme">Тема оформления</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Тёмная</string>
+    <string name="theme_system">Системная</string>
+    <string name="settings_language">Язык приложения</string>
+    <string name="lang_ru">Русский</string>
+    <string name="lang_en">English</string>
+    <string name="lang_system">Системный</string>
+    <string name="app_version_format">Версия: %s</string>
+    <string name="app_developer">Разработчик: Jokimazi</string>
 </resources>

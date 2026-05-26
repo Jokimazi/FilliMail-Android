@@ -1,6 +1,8 @@
 package site.jokimazi.fillimail;
 
 import android.app.Application;
+import android.content.SharedPreferences;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.room.Room;
 import site.jokimazi.fillimail.model.AppDatabase;
 
@@ -12,9 +14,11 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
         instance = this;
-        database = Room.databaseBuilder(this, AppDatabase.class, "fillimail_db")
-                .allowMainThreadQueries()
-                .build();
+        database = Room.databaseBuilder(this, AppDatabase.class, "fillimail_db").build();
+
+        SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
+        int theme = prefs.getInt("theme", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        AppCompatDelegate.setDefaultNightMode(theme);
     }
 
     public static App getInstance() {

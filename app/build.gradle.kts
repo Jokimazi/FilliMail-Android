@@ -10,8 +10,8 @@ android {
         applicationId = "site.jokimazi.fillimail"
         minSdk = 30
         targetSdk = 36
-        versionCode = 10
-        versionName = "1.4.0-Alpha"
+        versionCode = 11
+        versionName = "1.4.1-Alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -33,6 +33,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
         compose = false
     }
 
