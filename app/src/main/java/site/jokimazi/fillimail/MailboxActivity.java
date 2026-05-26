@@ -7,13 +7,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
-import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import com.google.android.material.navigation.NavigationView;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
@@ -42,11 +42,17 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
     private int dynamicIdCounter = 1000;
     private volatile long currentLoadId = 0;
 
+    private String currentEmailKey = "all";
+    private String currentServerFolder = "INBOX";
+    private String currentDisplayFolder;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMailboxBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        currentDisplayFolder = getString(R.string.nav_inbox);
 
         binding.toolbar.setNavigationOnClickListener(v -> binding.drawerLayout.open());
         binding.navView.setNavigationItemSelectedListener(this);
@@ -66,6 +72,11 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
         binding.toolbar.setSubtitle(getString(R.string.nav_all_mail));
 
         foldersCache.put("all", new ArrayList<>(Arrays.asList("INBOX", "Sent", "Trash")));
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         loadAccountsAndBuildMenu();
     }
 
@@ -73,12 +84,14 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
         new Thread(() -> {
             accountList = App.getInstance().getDatabase().accountDao().getAllAccounts();
             for (EmailAccount acc : accountList) {
-                foldersCache.put(acc.getEmail(), new ArrayList<>(Arrays.asList("INBOX", "Sent", "Trash")));
+                if (!foldersCache.containsKey(acc.getEmail())) {
+                    foldersCache.put(acc.getEmail(), new ArrayList<>(Arrays.asList("INBOX", "Sent", "Trash")));
+                }
             }
             runOnUiThread(() -> {
                 rebuildMenu();
                 for (EmailAccount account : accountList) fetchFoldersFromServer(account);
-                loadEmailsForAccount("all", "INBOX", getString(R.string.nav_inbox));
+                loadEmailsForAccount(currentEmailKey, currentServerFolder, currentDisplayFolder);
             });
         }).start();
     }
@@ -204,18 +217,23 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
     }
 
     private void loadEmailsForAccount(String email, String serverFolderName, String displayFolderName) {
+        // Запоминаем текущий выбор
+        this.currentEmailKey = email;
+        this.currentServerFolder = serverFolderName;
+        this.currentDisplayFolder = displayFolderName;
+
         binding.toolbar.setTitle(displayFolderName);
         binding.toolbar.setSubtitle(email.equals("all") ? getString(R.string.nav_all_mail) : email);
 
         final long myLoadId = System.currentTimeMillis();
-
         currentLoadId = myLoadId;
+
         emailAdapter.clear();
         binding.progressLoading.setVisibility(View.VISIBLE);
         binding.tvEmptyState.setVisibility(View.GONE);
 
         new Thread(() -> {
-            boolean hasEmails = false;
+            List<EmailMessage> combinedList = new ArrayList<>();
             try {
                 List<EmailAccount> targetAccounts = new ArrayList<>();
                 if (email.equals("all")) targetAccounts.addAll(accountList);
@@ -223,57 +241,52 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
 
                 for (EmailAccount account : targetAccounts) {
                     if (currentLoadId != myLoadId) return;
-                    Properties props = new Properties();
-                    props.setProperty("mail.store.protocol", "imaps");
-                    Session session = Session.getInstance(props);
-                    Store store = session.getStore("imaps");
-                    store.connect(account.getImapHost(), account.getImapPort(), account.getEmail(), account.getPassword());
-                    Folder folder = store.getFolder(serverFolderName);
-                    if (!folder.exists()) folder = store.getFolder("INBOX");
-                    folder.open(Folder.READ_ONLY);
+                    try {
+                        Properties props = new Properties();
+                        props.setProperty("mail.store.protocol", "imaps");
+                        Session session = Session.getInstance(props);
+                        Store store = session.getStore("imaps");
+                        store.connect(account.getImapHost(), account.getImapPort(), account.getEmail(), account.getPassword());
+                        Folder folder = store.getFolder(serverFolderName);
+                        if (!folder.exists()) folder = store.getFolder("INBOX");
+                        folder.open(Folder.READ_ONLY);
 
-                    // ИСПРАВЛЕНИЕ: Получаем доступ к UIDFolder
-                    UIDFolder uidFolder = null;
-                    if (folder instanceof UIDFolder) {
-                        uidFolder = (UIDFolder) folder;
-                    }
+                        UIDFolder uidFolder = (folder instanceof UIDFolder) ? (UIDFolder) folder : null;
+                        int messageCount = folder.getMessageCount();
+                        if (messageCount > 0) {
+                            int start = Math.max(1, messageCount - 19);
+                            for (javax.mail.Message msg : folder.getMessages(start, messageCount)) {
+                                if (currentLoadId != myLoadId) break;
 
-                    int messageCount = folder.getMessageCount();
-                    if (messageCount > 0) {
-                        hasEmails = true;
-                        int start = Math.max(1, messageCount - 19);
-                        for (javax.mail.Message msg : folder.getMessages(start, messageCount)) {
-                            if (currentLoadId != myLoadId) break;
+                                long msgUid = (uidFolder != null) ? uidFolder.getUID(msg) : -1;
 
-                            // Извлекаем UID
-                            long msgUid = -1;
-                            if (uidFolder != null) {
-                                msgUid = uidFolder.getUID(msg);
+                                Date messageDate = msg.getReceivedDate();
+                                if (messageDate == null) messageDate = msg.getSentDate();
+                                if (messageDate == null) messageDate = new Date(0);
+
+                                combinedList.add(new EmailMessage(msgUid, account.getId(), msg.getFrom()[0].toString(), msg.getSubject(), "", messageDate));
                             }
-
-                            // Сохраняем UID и ID аккаунта в модель
-                            EmailMessage newEmail = new EmailMessage(msgUid, account.getId(), msg.getFrom()[0].toString(), msg.getSubject(), "");
-
-                            runOnUiThread(() -> {
-                                if (currentLoadId == myLoadId) {
-                                    emailAdapter.addEmail(newEmail);
-                                    binding.progressLoading.setVisibility(View.GONE);
-                                    binding.tvEmptyState.setVisibility(View.GONE);
-                                }
-                            });
                         }
+                        folder.close(false); store.close();
+                    } catch (Exception accountException) {
+                        Log.e(TAG, "Ошибка чтения аккаунта " + account.getEmail(), accountException);
                     }
-                    folder.close(false); store.close();
                 }
-                final boolean result = hasEmails;
+
+                combinedList.sort((m1, m2) -> {
+                    if (m1.date == null || m2.date == null) return 0;
+                    return m2.date.compareTo(m1.date);
+                });
+
                 runOnUiThread(() -> {
                     if (currentLoadId == myLoadId) {
+                        emailAdapter.setEmails(combinedList);
                         binding.progressLoading.setVisibility(View.GONE);
-                        if (!result) binding.tvEmptyState.setVisibility(View.VISIBLE);
+                        if (combinedList.isEmpty()) binding.tvEmptyState.setVisibility(View.VISIBLE);
                     }
                 });
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "Глобальная ошибка миксования писем", e);
                 runOnUiThread(() -> binding.progressLoading.setVisibility(View.GONE));
             }
         }).start();
