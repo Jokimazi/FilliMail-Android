@@ -19,7 +19,7 @@
                 android:id="@+id/toolbar_compose"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                app:title="Новое письмо"
+                app:title="@string/title_compose"
                 app:titleTextColor="?attr/colorOnPrimary"
                 app:navigationIcon="@android:drawable/ic_menu_revert"
                 app:navigationIconTint="?attr/colorOnPrimary"
@@ -46,7 +46,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                android:hint="Кому">
+                android:hint="@string/hint_to">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_to"
@@ -60,7 +60,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                android:hint="Тема">
+                android:hint="@string/hint_subject">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_subject"
@@ -75,7 +75,7 @@
                 android:layout_weight="1"
                 android:layout_marginTop="8dp"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                android:hint="Текст письма">
+                android:hint="@string/hint_body">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_body"

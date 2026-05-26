@@ -15,7 +15,7 @@
     <string name="toast_searching_settings">Поиск настроек почты…</string>
     <string name="toast_settings_found">Настройки успешно найдены!</string>
     <string name="toast_settings_not_found">Настройки не найдены. Введите вручную.</string>
-    <string name="toast_empty_fields">Заполните логин и пароль</string>
+    <string name="toast_empty_fields">Заполните все поля</string>
     <string name="lang_changed">Язык изменен на русский</string>
     <string name="nav_all_mail">Вся почта</string>
     <string name="nav_inbox">Входящие</string>
@@ -30,4 +30,34 @@
     <string name="desc_compose_fab">Написать письмо</string>
     <string name="toast_open_email">Открыть письмо: </string>
     <string name="toast_network_error">Ошибка сети: </string>
+
+    <string name="toast_invalid_port">Неверный формат порта</string>
+    <string name="toast_account_added">Аккаунт добавлен!</string>
+    <string name="toast_save_error">Ошибка сохранения: %s</string>
+    <string name="toast_account_error">Ошибка аккаунта</string>
+    <string name="toast_fill_recipient">Заполните получателя и текст</string>
+    <string name="toast_sending">Отправка...</string>
+    <string name="toast_email_sent">Письмо отправлено!</string>
+    <string name="toast_send_error">Ошибка отправки: %s</string>
+    <string name="toast_cannot_delete_last">Нельзя удалить последний аккаунт</string>
+    <string name="dialog_delete_title">Удаление</string>
+    <string name="dialog_delete_message">Удалить %s?</string>
+    <string name="dialog_yes">Да</string>
+    <string name="dialog_no">Нет</string>
+    <string name="hint_imap_host_example">IMAP Хост (например, imap.mail.ru)</string>
+    <string name="hint_imap_port_example">Порт (обычно 993)</string>
+    <string name="btn_save_account">Сохранить аккаунт</string>
+    <string name="title_compose">Новое письмо</string>
+    <string name="hint_to">Кому</string>
+    <string name="hint_subject">Тема</string>
+    <string name="hint_body">Текст письма</string>
+    <string name="title_manage_accounts">Управление аккаунтами</string>
+    <string name="desc_add_account">Добавить аккаунт</string>
+    <string name="title_read_email">Чтение письма</string>
+    <string name="desc_edit">Редактировать</string>
+    <string name="desc_delete">Удалить</string>
+    <string name="state_loading">Загрузка...</string>
+    <string name="state_email_not_found">Письмо не найдено.</string>
+    <string name="state_error">Ошибка: %s</string>
+    <string name="state_unsupported_format">Неподдерживаемый формат письма</string>
 </resources>

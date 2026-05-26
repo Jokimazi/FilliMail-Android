@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
         String email = String.valueOf(binding.etEmail.getText()).trim();
         if (!email.contains("@")) return;
 
-        Toast.makeText(this, R.string.toast_searching_settings, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.toast_searching_settings), Toast.LENGTH_SHORT).show();
         String domain = email.substring(email.indexOf("@") + 1).toLowerCase();
 
         String imapHost = "";
@@ -96,9 +96,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (found) {
-            Toast.makeText(this, R.string.toast_settings_found, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.toast_settings_found), Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, R.string.toast_settings_not_found, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.toast_settings_not_found), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -111,8 +111,8 @@ public class MainActivity extends AppCompatActivity {
         String smtpHost = String.valueOf(binding.etSmtpHost.getText()).trim();
         String smtpPortStr = String.valueOf(binding.etSmtpPort.getText()).trim();
 
-        if (email.isEmpty() || password.isEmpty() || imapHost.isEmpty() || imapPortStr.isEmpty()) {
-            Toast.makeText(this, R.string.toast_empty_fields, Toast.LENGTH_SHORT).show();
+        if (email.isEmpty() || password.isEmpty() || imapHost.isEmpty() || imapPortStr.isEmpty() || smtpHost.isEmpty() || smtpPortStr.isEmpty()) {
+            Toast.makeText(this, getString(R.string.toast_empty_fields), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -152,6 +152,6 @@ public class MainActivity extends AppCompatActivity {
         finish();
         startActivity(intent);
 
-        Toast.makeText(this, nextLang.equals("ru") ? "Язык изменен на русский" : "Language changed to English", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.lang_changed), Toast.LENGTH_SHORT).show();
     }
 }

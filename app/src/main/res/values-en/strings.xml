@@ -15,7 +15,7 @@
     <string name="toast_searching_settings">Searching mail settings…</string>
     <string name="toast_settings_found">Settings automatically found!</string>
     <string name="toast_settings_not_found">Settings not found. Enter manually.</string>
-    <string name="toast_empty_fields">Fill email and password</string>
+    <string name="toast_empty_fields">Please fill in all fields</string>
     <string name="lang_changed">Language changed to English</string>
     <string name="nav_all_mail">All Mail</string>
     <string name="nav_inbox">Inbox</string>
@@ -30,4 +30,34 @@
     <string name="desc_compose_fab">Compose email</string>
     <string name="toast_open_email">Open email: </string>
     <string name="toast_network_error">Network error: </string>
+
+    <string name="toast_invalid_port">Invalid port format</string>
+    <string name="toast_account_added">Account added!</string>
+    <string name="toast_save_error">Save error: %s</string>
+    <string name="toast_account_error">Account error</string>
+    <string name="toast_fill_recipient">Fill recipient and body</string>
+    <string name="toast_sending">Sending...</string>
+    <string name="toast_email_sent">Email sent!</string>
+    <string name="toast_send_error">Send error: %s</string>
+    <string name="toast_cannot_delete_last">Cannot delete the last account</string>
+    <string name="dialog_delete_title">Delete</string>
+    <string name="dialog_delete_message">Delete %s?</string>
+    <string name="dialog_yes">Yes</string>
+    <string name="dialog_no">No</string>
+    <string name="hint_imap_host_example">IMAP Host (e.g. imap.mail.ru)</string>
+    <string name="hint_imap_port_example">Port (usually 993)</string>
+    <string name="btn_save_account">Save account</string>
+    <string name="title_compose">Compose email</string>
+    <string name="hint_to">To</string>
+    <string name="hint_subject">Subject</string>
+    <string name="hint_body">Email body</string>
+    <string name="title_manage_accounts">Manage Accounts</string>
+    <string name="desc_add_account">Add account</string>
+    <string name="title_read_email">Read Email</string>
+    <string name="desc_edit">Edit</string>
+    <string name="desc_delete">Delete</string>
+    <string name="state_loading">Loading...</string>
+    <string name="state_email_not_found">Email not found.</string>
+    <string name="state_error">Error: %s</string>
+    <string name="state_unsupported_format">Unsupported email format</string>
 </resources>

@@ -1,43 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:fillViewport="true">
 
-    <EditText
-        android:id="@+id/et_email"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Email"
-        android:inputType="textEmailAddress" />
+        android:orientation="vertical"
+        android:padding="16dp">
 
-    <EditText
-        android:id="@+id/et_password"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Пароль"
-        android:inputType="textPassword" />
+        <EditText
+            android:id="@+id/et_email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_email"
+            android:inputType="textEmailAddress" />
 
-    <EditText
-        android:id="@+id/et_imap_host"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="IMAP Хост (например, imap.mail.ru)" />
+        <EditText
+            android:id="@+id/et_password"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_password"
+            android:inputType="textPassword" />
 
-    <EditText
-        android:id="@+id/et_imap_port"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Порт (обычно 993)"
-        android:inputType="number" />
+        <EditText
+            android:id="@+id/et_imap_host"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_imap_host_example" />
 
-    <Button
-        android:id="@+id/btn_save"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="Сохранить аккаунт" />
+        <EditText
+            android:id="@+id/et_imap_port"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_imap_port_example"
+            android:inputType="number" />
 
-</LinearLayout>
+        <EditText
+            android:id="@+id/et_smtp_host"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_smtp_host" />
+
+        <EditText
+            android:id="@+id/et_smtp_port"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_smtp_port"
+            android:inputType="number" />
+
+        <CheckBox
+            android:id="@+id/cb_ssl"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/check_use_ssl"
+            android:checked="true" />
+
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/btn_save_account" />
+
+    </LinearLayout>
+</ScrollView>

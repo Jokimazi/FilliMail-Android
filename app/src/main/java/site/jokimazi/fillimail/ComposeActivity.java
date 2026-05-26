@@ -32,12 +32,11 @@ public class ComposeActivity extends AppCompatActivity {
         binding = ActivityComposeBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Получаем наш аккаунт из базы
         List<EmailAccount> accounts = App.getInstance().getDatabase().accountDao().getAllAccounts();
         if (!accounts.isEmpty()) {
             currentAccount = accounts.get(0);
         } else {
-            Toast.makeText(this, "Ошибка аккаунта", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.toast_account_error), Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -52,11 +51,11 @@ public class ComposeActivity extends AppCompatActivity {
         String body = String.valueOf(binding.etBody.getText()).trim();
 
         if (to.isEmpty() || body.isEmpty()) {
-            Toast.makeText(this, "Заполните получателя и текст", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.toast_fill_recipient), Toast.LENGTH_SHORT).show();
             return;
         }
 
-        Toast.makeText(this, "Отправка...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.toast_sending), Toast.LENGTH_SHORT).show();
         binding.btnSend.setEnabled(false);
 
         executor.execute(() -> {
@@ -87,7 +86,7 @@ public class ComposeActivity extends AppCompatActivity {
                 Transport.send(message);
 
                 runOnUiThread(() -> {
-                    Toast.makeText(this, "Письмо отправлено!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getString(R.string.toast_email_sent), Toast.LENGTH_LONG).show();
                     finish();
                 });
 
@@ -95,7 +94,7 @@ public class ComposeActivity extends AppCompatActivity {
                 e.printStackTrace();
                 runOnUiThread(() -> {
                     android.util.Log.e("FilliMailError", "ОШИБКА SMTP", e);
-                    Toast.makeText(this, "Ошибка отправки: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getString(R.string.toast_send_error, e.getMessage()), Toast.LENGTH_LONG).show();
                     binding.btnSend.setEnabled(true);
                 });
             }

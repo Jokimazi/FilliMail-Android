@@ -10,6 +10,7 @@ import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.Session;
 import javax.mail.Store;
+import javax.mail.UIDFolder;
 import site.jokimazi.fillimail.model.EmailAccount;
 import site.jokimazi.fillimail.model.EmailMessage;
 import java.util.List;
@@ -37,7 +38,7 @@ public class ReadEmailActivity extends AppCompatActivity {
         if (email != null) {
             tvSender.setText(email.sender);
             tvSubject.setText(email.subject);
-            tvBody.setText("Загрузка...");
+            tvBody.setText(getString(R.string.state_loading));
             loadEmailBody(email);
         }
     }
@@ -49,38 +50,48 @@ public class ReadEmailActivity extends AppCompatActivity {
                 Message msg = null;
                 EmailAccount targetAccount = null;
 
+                // Находим нужный аккаунт по ID
                 for (EmailAccount acc : accounts) {
-                    Properties props = new Properties();
-                    props.setProperty("mail.store.protocol", "imaps");
-                    Session session = Session.getInstance(props);
-                    Store store = session.getStore("imaps");
-                    try {
-                        store.connect(acc.getImapHost(), acc.getImapPort(), acc.getEmail(), acc.getPassword());
-                        Folder folder = store.getFolder("INBOX");
-                        folder.open(Folder.READ_ONLY);
+                    if (acc.getId() == email.accountId) {
+                        targetAccount = acc;
+                        break;
+                    }
+                }
 
-                        for (Message m : folder.getMessages()) {
-                            if (m.getSubject() != null && m.getSubject().equals(email.subject)) {
-                                msg = m;
-                                targetAccount = acc;
-                                break;
-                            }
-                        }
-                        if (msg != null) break;
-                        folder.close(false);
-                        store.close();
-                    } catch (Exception e) { continue; }
+                if (targetAccount == null) {
+                    runOnUiThread(() -> tvBody.setText(getString(R.string.toast_account_error)));
+                    return;
+                }
+
+                Properties props = new Properties();
+                props.setProperty("mail.store.protocol", "imaps");
+                Session session = Session.getInstance(props);
+                Store store = session.getStore("imaps");
+
+                store.connect(targetAccount.getImapHost(), targetAccount.getImapPort(), targetAccount.getEmail(), targetAccount.getPassword());
+
+                // В идеале сюда тоже нужно передавать папку из MailboxActivity,
+                // но пока для простоты оставим INBOX, как было в оригинале
+                Folder folder = store.getFolder("INBOX");
+                folder.open(Folder.READ_ONLY);
+
+                // ИСПРАВЛЕНИЕ: Ищем письмо мгновенно по UID
+                if (folder instanceof UIDFolder && email.uid != -1) {
+                    msg = ((UIDFolder) folder).getMessageByUID(email.uid);
                 }
 
                 if (msg != null) {
                     final String contentStr = getTextFromMessage(msg);
                     runOnUiThread(() -> tvBody.setText(contentStr));
                 } else {
-                    runOnUiThread(() -> tvBody.setText("Письмо не найдено."));
+                    runOnUiThread(() -> tvBody.setText(getString(R.string.state_email_not_found)));
                 }
 
+                folder.close(false);
+                store.close();
+
             } catch (Exception e) {
-                runOnUiThread(() -> tvBody.setText("Ошибка: " + e.getMessage()));
+                runOnUiThread(() -> tvBody.setText(getString(R.string.state_error, e.getMessage())));
             }
         }).start();
     }
@@ -92,7 +103,7 @@ public class ReadEmailActivity extends AppCompatActivity {
             javax.mail.Multipart multipart = (javax.mail.Multipart) message.getContent();
             return getTextFromMultipart(multipart);
         }
-        return "Неподдерживаемый формат письма";
+        return getString(R.string.state_unsupported_format);
     }
 
     private String getTextFromMultipart(javax.mail.Multipart multipart) throws Exception {

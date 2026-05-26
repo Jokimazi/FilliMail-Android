@@ -27,10 +27,18 @@ public class ManageAccountsActivity extends AppCompatActivity {
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+        // ИСПРАВЛЕНИЕ: Оживили кнопку добавления аккаунта
         fabAdd.setOnClickListener(v -> {
+            startActivity(new Intent(this, AddAccountActivity.class));
         });
 
         loadAccounts();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadAccounts(); // Обновляем список, если вернулись с экрана добавления
     }
 
     private void loadAccounts() {
@@ -47,36 +55,31 @@ public class ManageAccountsActivity extends AppCompatActivity {
         new Thread(() -> {
             List<EmailAccount> list = App.getInstance().getDatabase().accountDao().getAllAccounts();
             if (list.size() <= 1) {
-                runOnUiThread(() -> Toast.makeText(this, "Нельзя удалить последний аккаунт", Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> Toast.makeText(this, getString(R.string.toast_cannot_delete_last), Toast.LENGTH_SHORT).show());
             } else {
-                new AlertDialog.Builder(this)
-                        .setTitle("Удаление")
-                        .setMessage("Удалить " + account.getEmail() + "?")
-                        .setPositiveButton("Да", (d, w) -> {
-                            App.getInstance().getDatabase().accountDao().delete(account);
-                            loadAccounts();
-                        })
-                        .setNegativeButton("Нет", null)
-                        .show();
+                // ИСПРАВЛЕНИЕ: Вызов диалога обязательно должен быть в главном потоке!
+                runOnUiThread(() -> {
+                    new AlertDialog.Builder(this)
+                            .setTitle(getString(R.string.dialog_delete_title))
+                            .setMessage(getString(R.string.dialog_delete_message, account.getEmail()))
+                            .setPositiveButton(getString(R.string.dialog_yes), (d, w) -> performDelete(account))
+                            .setNegativeButton(getString(R.string.dialog_no), null)
+                            .show();
+                });
             }
+        }).start();
+    }
+
+    private void performDelete(EmailAccount account) {
+        new Thread(() -> {
+            App.getInstance().getDatabase().accountDao().delete(account);
+            runOnUiThread(this::loadAccounts);
         }).start();
     }
 
     private void onEditClick(EmailAccount account) {
         Intent intent = new Intent(this, AddAccountActivity.class);
-        intent.putExtra("edit_account_id", account.getId()); // Убедись, что ID передается
+        intent.putExtra("edit_account_id", account.getId());
         startActivity(intent);
-    }
-
-    private void performDelete(EmailAccount account) {
-        new Thread(() -> {
-            List<EmailAccount> all = App.getInstance().getDatabase().accountDao().getAllAccounts();
-            if (all.size() > 1) {
-                App.getInstance().getDatabase().accountDao().delete(account);
-                runOnUiThread(this::loadAccounts);
-            } else {
-                runOnUiThread(() -> Toast.makeText(this, "Нельзя удалить последний аккаунт", Toast.LENGTH_SHORT).show());
-            }
-        }).start();
     }
 }

@@ -36,6 +36,16 @@
             android:name=".ReadEmailActivity"
             android:exported="false"
             android:theme="@style/Theme.FilliMail" />
+
+        <activity
+            android:name=".AddAccountActivity"
+            android:exported="false"
+            android:theme="@style/Theme.FilliMail" />
+        <activity
+            android:name=".ManageAccountsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.FilliMail" />
+
     </application>
 
 </manifest>

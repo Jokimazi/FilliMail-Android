@@ -8,8 +8,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
-
-// ЭТОТ ИМПОРТ ОБЯЗАТЕЛЕН, ТАК КАК МЫ ТЕПЕРЬ В ДРУГОЙ ПАПКЕ
 import site.jokimazi.fillimail.R;
 import site.jokimazi.fillimail.model.EmailMessage;
 

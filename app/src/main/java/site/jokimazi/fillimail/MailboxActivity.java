@@ -20,6 +20,7 @@ import java.util.Properties;
 import javax.mail.Folder;
 import javax.mail.Session;
 import javax.mail.Store;
+import javax.mail.UIDFolder;
 
 import site.jokimazi.fillimail.adapter.EmailAdapter;
 import site.jokimazi.fillimail.databinding.ActivityMailboxBinding;
@@ -114,7 +115,6 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
     private void drawFolders(Menu menu, String emailKey, int startOrder) {
         List<String> folders = foldersCache.get(emailKey);
         if (folders != null) {
-            // Сортировка как договаривались
             List<String> sorted = sortFolders(folders);
 
             for (String folderName : sorted) {
@@ -183,6 +183,9 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
             loadEmailsForAccount("all", "INBOX", getString(R.string.nav_inbox));
             return true;
         } else if (id == R.id.nav_settings || id == R.id.nav_accounts_manage || id == R.id.nav_about) {
+            if (id == R.id.nav_accounts_manage) {
+                startActivity(new Intent(this, ManageAccountsActivity.class));
+            }
             binding.drawerLayout.close(); return true;
         }
         if (accountItemMap.containsKey(id)) {
@@ -228,15 +231,29 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
                     Folder folder = store.getFolder(serverFolderName);
                     if (!folder.exists()) folder = store.getFolder("INBOX");
                     folder.open(Folder.READ_ONLY);
+
+                    // ИСПРАВЛЕНИЕ: Получаем доступ к UIDFolder
+                    UIDFolder uidFolder = null;
+                    if (folder instanceof UIDFolder) {
+                        uidFolder = (UIDFolder) folder;
+                    }
+
                     int messageCount = folder.getMessageCount();
                     if (messageCount > 0) {
                         hasEmails = true;
                         int start = Math.max(1, messageCount - 19);
                         for (javax.mail.Message msg : folder.getMessages(start, messageCount)) {
                             if (currentLoadId != myLoadId) break;
-                            EmailMessage newEmail = new EmailMessage(msg.getFrom()[0].toString(), msg.getSubject(), "");
 
-                            final boolean finalHasEmails = true;
+                            // Извлекаем UID
+                            long msgUid = -1;
+                            if (uidFolder != null) {
+                                msgUid = uidFolder.getUID(msg);
+                            }
+
+                            // Сохраняем UID и ID аккаунта в модель
+                            EmailMessage newEmail = new EmailMessage(msgUid, account.getId(), msg.getFrom()[0].toString(), msg.getSubject(), "");
+
                             runOnUiThread(() -> {
                                 if (currentLoadId == myLoadId) {
                                     emailAdapter.addEmail(newEmail);
@@ -255,7 +272,10 @@ public class MailboxActivity extends AppCompatActivity implements NavigationView
                         if (!result) binding.tvEmptyState.setVisibility(View.VISIBLE);
                     }
                 });
-            } catch (Exception e) { runOnUiThread(() -> binding.progressLoading.setVisibility(View.GONE)); }
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> binding.progressLoading.setVisibility(View.GONE));
+            }
         }).start();
     }
 
