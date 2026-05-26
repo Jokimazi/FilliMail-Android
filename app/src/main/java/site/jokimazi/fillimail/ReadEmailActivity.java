@@ -1,35 +1,61 @@
 package site.jokimazi.fillimail;
 
+import android.content.ContentValues;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.google.android.material.appbar.MaterialToolbar;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 import javax.mail.Folder;
 import javax.mail.Message;
+import javax.mail.Multipart;
+import javax.mail.Part;
 import javax.mail.Session;
 import javax.mail.Store;
 import javax.mail.UIDFolder;
+import javax.mail.internet.MimeUtility;
 import site.jokimazi.fillimail.model.EmailAccount;
 import site.jokimazi.fillimail.model.EmailMessage;
-import java.util.List;
-import java.util.Properties;
 
 public class ReadEmailActivity extends AppCompatActivity {
 
     private TextView tvSender, tvReceiver, tvSubject, tvBodyPlain;
     private WebView wvBody;
     private ImageView ivAvatar;
+    private LinearLayout layoutAttachments;
+    private EmailMessage currentEmail;
 
-    private static class ParsedBody {
-        String content;
-        boolean isHtml;
-        ParsedBody(String content, boolean isHtml) {
-            this.content = content;
-            this.isHtml = isHtml;
+    private static class ParsedData {
+        String plainContent = "";
+        String htmlContent = "";
+        boolean isHtml = false;
+        List<AttachmentInfo> attachments = new ArrayList<>();
+    }
+
+    private static class AttachmentInfo {
+        String fileName;
+        String mimeType;
+        int size;
+
+        AttachmentInfo(String fileName, String mimeType, int size) {
+            this.fileName = fileName;
+            this.mimeType = mimeType;
+            this.size = size;
         }
     }
 
@@ -44,6 +70,7 @@ public class ReadEmailActivity extends AppCompatActivity {
         tvBodyPlain = findViewById(R.id.tv_read_body_plain);
         wvBody = findViewById(R.id.wv_read_body);
         ivAvatar = findViewById(R.id.iv_read_avatar);
+        layoutAttachments = findViewById(R.id.layout_attachments);
         MaterialToolbar toolbar = findViewById(R.id.toolbar_read);
 
         toolbar.setNavigationOnClickListener(v -> finish());
@@ -53,36 +80,36 @@ public class ReadEmailActivity extends AppCompatActivity {
         wvBody.getSettings().setBuiltInZoomControls(true);
         wvBody.getSettings().setDisplayZoomControls(false);
 
-        EmailMessage email = (EmailMessage) getIntent().getSerializableExtra("email_object");
+        currentEmail = (EmailMessage) getIntent().getSerializableExtra("email_object");
 
-        if (email != null) {
-            boolean isSentFolder = email.folderName != null && (email.folderName.equalsIgnoreCase("Sent") || email.folderName.equalsIgnoreCase("Отправленные"));
+        if (currentEmail != null) {
+            boolean isSentFolder = currentEmail.folderName != null && (currentEmail.folderName.equalsIgnoreCase("Sent") || currentEmail.folderName.equalsIgnoreCase("Отправленные"));
 
-            String displayName = (email.senderName != null && !email.senderName.isEmpty())
-                    ? email.senderName + " <" + email.senderEmail + ">"
-                    : email.senderEmail;
+            String displayName = (currentEmail.senderName != null && !currentEmail.senderName.isEmpty())
+                    ? currentEmail.senderName + " <" + currentEmail.senderEmail + ">"
+                    : currentEmail.senderEmail;
 
             if (isSentFolder) {
-                tvSender.setText(getString(R.string.format_from, email.receiver));
+                tvSender.setText(getString(R.string.format_from, currentEmail.receiver));
                 tvReceiver.setText(getString(R.string.format_to, displayName));
             } else {
                 tvSender.setText(getString(R.string.format_from, displayName));
-                tvReceiver.setText(getString(R.string.format_to, email.receiver));
+                tvReceiver.setText(getString(R.string.format_to, currentEmail.receiver));
             }
 
-            tvSubject.setText(email.subject);
+            tvSubject.setText(currentEmail.subject);
 
             tvBodyPlain.setVisibility(View.VISIBLE);
             wvBody.setVisibility(View.GONE);
             tvBodyPlain.setText(getString(R.string.state_loading));
 
             Glide.with(this)
-                    .load(email.getGravatarUrl())
+                    .load(currentEmail.getGravatarUrl())
                     .placeholder(android.R.drawable.ic_menu_myplaces)
                     .error(android.R.drawable.ic_menu_myplaces)
                     .into(ivAvatar);
 
-            loadEmailBody(email);
+            loadEmailBody(currentEmail);
         }
     }
 
@@ -120,18 +147,22 @@ public class ReadEmailActivity extends AppCompatActivity {
                 }
 
                 if (msg != null) {
-                    final ParsedBody parsed = extractBody(msg);
+                    final ParsedData parsed = new ParsedData();
+                    extractParts(msg, parsed);
+
                     runOnUiThread(() -> {
                         if (parsed.isHtml) {
                             tvBodyPlain.setVisibility(View.GONE);
                             wvBody.setVisibility(View.VISIBLE);
-                            String adaptiveHtml = prepareHtmlForMobile(parsed.content);
+                            String adaptiveHtml = prepareHtmlForMobile(parsed.htmlContent);
                             wvBody.loadDataWithBaseURL(null, adaptiveHtml, "text/html; charset=utf-8", "UTF-8", null);
                         } else {
                             wvBody.setVisibility(View.GONE);
                             tvBodyPlain.setVisibility(View.VISIBLE);
-                            tvBodyPlain.setText(parsed.content);
+                            tvBodyPlain.setText(parsed.plainContent.trim());
                         }
+
+                        renderAttachments(parsed.attachments);
                     });
                 } else {
                     runOnUiThread(() -> showError(getString(R.string.state_email_not_found)));
@@ -144,6 +175,136 @@ public class ReadEmailActivity extends AppCompatActivity {
                 runOnUiThread(() -> showError(getString(R.string.state_error, e.getMessage())));
             }
         }).start();
+    }
+
+    private void renderAttachments(List<AttachmentInfo> attachments) {
+        layoutAttachments.removeAllViews();
+        if (attachments.isEmpty()) return;
+
+        LayoutInflater inflater = LayoutInflater.from(this);
+        for (AttachmentInfo att : attachments) {
+            View view = inflater.inflate(R.layout.item_attachment, layoutAttachments, false);
+            TextView tvName = view.findViewById(R.id.tv_attachment_name);
+            TextView tvInfo = view.findViewById(R.id.tv_attachment_info);
+
+            tvName.setText(att.fileName);
+
+            String sizeStr = att.size > 0 ? (att.size / 1024) + " KB" : "Unknown size";
+            tvInfo.setText(sizeStr);
+
+            view.setOnClickListener(v -> startDownload(att.fileName));
+
+            layoutAttachments.addView(view);
+        }
+    }
+
+    private void startDownload(String targetFileName) {
+        Toast.makeText(this, "Downloading " + targetFileName + "...", Toast.LENGTH_SHORT).show();
+
+        new Thread(() -> {
+            try {
+                EmailAccount targetAccount = App.getInstance().getDatabase().accountDao().getAccountById(currentEmail.accountId);
+                if (targetAccount == null) return;
+
+                Properties props = new Properties();
+                props.setProperty("mail.store.protocol", "imaps");
+                Session session = Session.getInstance(props);
+                Store store = session.getStore("imaps");
+                store.connect(targetAccount.getImapHost(), targetAccount.getImapPort(), targetAccount.getEmail(), targetAccount.getPassword());
+
+                Folder folder = store.getFolder(currentEmail.folderName);
+                folder.open(Folder.READ_ONLY);
+
+                Message msg = ((UIDFolder) folder).getMessageByUID(currentEmail.uid);
+                if (msg != null) {
+                    Part targetPart = findPartByName(msg, targetFileName);
+                    if (targetPart != null) {
+                        saveAndOpenFile(targetPart, targetFileName);
+                    }
+                }
+
+                folder.close(false);
+                store.close();
+            } catch (Exception e) {
+                runOnUiThread(() -> Toast.makeText(this, "Download failed", Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+
+    private Part findPartByName(Part part, String targetName) throws Exception {
+        String fileName = part.getFileName();
+        if (fileName != null) {
+            String decodedName = MimeUtility.decodeText(fileName);
+            if (decodedName.equals(targetName)) {
+                return part;
+            }
+        }
+        if (part.isMimeType("multipart/*")) {
+            Multipart mp = (Multipart) part.getContent();
+            for (int i = 0; i < mp.getCount(); i++) {
+                Part found = findPartByName(mp.getBodyPart(i), targetName);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
+    private void saveAndOpenFile(Part part, String fileName) throws Exception {
+        String mimeType = part.getContentType();
+        if (mimeType != null && mimeType.contains(";")) {
+            mimeType = mimeType.split(";")[0].trim();
+        } else {
+            mimeType = "application/octet-stream";
+        }
+
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+        values.put(MediaStore.MediaColumns.MIME_TYPE, mimeType);
+        values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+
+        Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+        if (uri != null) {
+            try (InputStream is = part.getInputStream();
+                 OutputStream os = getContentResolver().openOutputStream(uri)) {
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = is.read(buffer)) != -1) {
+                    os.write(buffer, 0, bytesRead);
+                }
+            }
+
+            runOnUiThread(() -> Toast.makeText(this, "Saved to Downloads", Toast.LENGTH_SHORT).show());
+
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(uri, mimeType);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            try {
+                startActivity(intent);
+            } catch (Exception e) {
+                runOnUiThread(() -> Toast.makeText(this, "No app found to open this file", Toast.LENGTH_SHORT).show());
+            }
+        }
+    }
+
+    private void extractParts(Part part, ParsedData parsed) throws Exception {
+        String disposition = part.getDisposition();
+        String fileName = part.getFileName();
+
+        if (Part.ATTACHMENT.equalsIgnoreCase(disposition) || fileName != null) {
+            String decodedName = fileName != null ? MimeUtility.decodeText(fileName) : "Unnamed File";
+            String mime = part.getContentType() != null ? part.getContentType().split(";")[0] : "";
+            parsed.attachments.add(new AttachmentInfo(decodedName, mime, part.getSize()));
+        } else if (part.isMimeType("text/html")) {
+            parsed.htmlContent = part.getContent().toString();
+            parsed.isHtml = true;
+        } else if (part.isMimeType("text/plain")) {
+            parsed.plainContent += part.getContent().toString() + "\n";
+        } else if (part.isMimeType("multipart/*")) {
+            Multipart mp = (Multipart) part.getContent();
+            for (int i = 0; i < mp.getCount(); i++) {
+                extractParts(mp.getBodyPart(i), parsed);
+            }
+        }
     }
 
     private void showError(String errorMsg) {
@@ -160,37 +321,5 @@ public class ReadEmailActivity extends AppCompatActivity {
         } else {
             return "<html><head>" + viewportAndStyle + "</head><body>" + html + "</body></html>";
         }
-    }
-
-    private ParsedBody extractBody(Message message) throws Exception {
-        if (message.isMimeType("text/html")) {
-            return new ParsedBody(message.getContent().toString(), true);
-        } else if (message.isMimeType("text/plain")) {
-            return new ParsedBody(message.getContent().toString(), false);
-        } else if (message.isMimeType("multipart/*")) {
-            javax.mail.Multipart multipart = (javax.mail.Multipart) message.getContent();
-            return extractFromMultipart(multipart);
-        }
-        return new ParsedBody(getString(R.string.state_unsupported_format), false);
-    }
-
-    private ParsedBody extractFromMultipart(javax.mail.Multipart multipart) throws Exception {
-        StringBuilder plainText = new StringBuilder();
-        for (int i = 0; i < multipart.getCount(); i++) {
-            javax.mail.BodyPart bodyPart = multipart.getBodyPart(i);
-            if (bodyPart.isMimeType("text/html")) {
-                return new ParsedBody(bodyPart.getContent().toString(), true);
-            } else if (bodyPart.isMimeType("text/plain")) {
-                plainText.append(bodyPart.getContent().toString()).append("\n");
-            } else if (bodyPart.getContent() instanceof javax.mail.Multipart) {
-                ParsedBody nested = extractFromMultipart((javax.mail.Multipart) bodyPart.getContent());
-                if (nested.isHtml) {
-                    return nested;
-                } else {
-                    plainText.append(nested.content);
-                }
-            }
-        }
-        return new ParsedBody(plainText.toString(), false);
     }
 }
